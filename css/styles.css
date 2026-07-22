@@ -879,3 +879,100 @@ body {
   0%, 100% { transform: scale(1);   opacity: .7; }
   50%      { transform: scale(.8);  opacity: .4; }
 }
+
+/* ==========================================
+   RESPONSIVE — versión móvil/tablet
+   ========================================== */
+
+/* Botón hamburguesa: oculto en escritorio */
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  color: var(--gray-700);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.menu-toggle:hover { border-color: var(--primary); color: var(--accent); }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 150;
+}
+.sidebar-backdrop.open { display: block; }
+
+@media (max-width: 900px) {
+  .menu-toggle { display: inline-flex; }
+
+  /* Sidebar se vuelve un drawer que entra desde la izquierda */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.6);
+  }
+
+  /* Topbar se acomoda en varias líneas si hace falta */
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--topbar-h);
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .topbar-title { font-size: 15px; }
+  .topbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .select-branch { flex: 1; min-width: 140px; }
+
+  .content { padding: 14px; gap: 12px; }
+
+  .metrics-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  .form-grid { grid-template-columns: 1fr !important; padding: 14px; }
+
+  /* Tablas: permite scroll horizontal sin romper el layout */
+  .card { overflow-x: auto; }
+
+  /* Modales no se salen de la pantalla */
+  .modal-box,
+  .stock-modal-box,
+  .profile-modal-box,
+  .qr-modal-box {
+    width: 94vw !important;
+    max-width: 94vw !important;
+  }
+
+  .login-card {
+    width: 90vw;
+    max-width: 380px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid { grid-template-columns: 1fr !important; }
+  .topbar-actions .btn-primary,
+  .topbar-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  .login-card { padding: 20px; }
+  .stock-detail-panel { flex-direction: column; align-items: flex-start; }
+}

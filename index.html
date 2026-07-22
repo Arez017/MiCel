@@ -81,6 +81,7 @@
 
 <!-- APP -->
 <div id="app" class="app hidden">
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon-sm">MC</div>
@@ -151,6 +152,9 @@
 
   <main class="main">
     <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <div>
         <h2 class="topbar-title" id="topbar-title">Principal</h2>
         <span class="topbar-sub" id="topbar-sub">Resumen general del sistema</span>

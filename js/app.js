@@ -1,5 +1,5 @@
 // ==========================================
-// APP.JS — MiCel v3.0
+// APP.JS — MiCel v3.0 (MVP standalone, sin backend)
 // ==========================================
 
 // ===== USUARIOS DEL SISTEMA =====
@@ -19,36 +19,35 @@ const usuarios = [
 
 let currentUser = null;
 
-// ===== LOGIN =====
+// ===== LOGIN (local, sin backend) =====
 function doLogin() {
-  const u = document.getElementById('login-user').value.trim();
-  const p = document.getElementById('login-pass').value.trim();
-  const found = usuarios.find(x => x.user === u && x.pass === p);
-  if (found) {
-    currentUser = found;
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    applyUserSession();
-    initApp();
-  } else {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+
+  const found = usuarios.find(u => u.user === user && u.pass === pass);
+  if (!found) {
     document.getElementById('login-error').style.display = 'block';
-    setTimeout(() => document.getElementById('login-error').style.display = 'none', 3000);
+    return;
   }
+
+  document.getElementById('login-error').style.display = 'none';
+  currentUser = found;
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  applyUserSession();
+  initApp();
 }
 
 function applyUserSession() {
-  // Sidebar: nombre, rol y avatar
   const ini = initials(currentUser.name);
   document.getElementById('sidebar-avatar').textContent  = ini;
   document.getElementById('sidebar-name').textContent    = currentUser.name;
   document.getElementById('sidebar-role').textContent    = currentUser.rol;
-  // Badge de rol en topbar
   const rolBadgeEl = document.getElementById('topbar-rol');
   if (rolBadgeEl) {
     rolBadgeEl.textContent  = currentUser.rol;
     rolBadgeEl.className    = 'badge ' + (currentUser.rol === 'Administrador' ? 'badge-purple' : 'badge-amber');
   }
-  // Si es técnico, ocultar módulo Usuarios
   const navUsuarios = document.getElementById('nav-usuarios');
   if (navUsuarios) navUsuarios.style.display = currentUser.rol === 'Técnico' ? 'none' : '';
 }
@@ -71,6 +70,7 @@ function initApp() {
   renderOrders(ordersData);
   renderStock(stockData);
   renderVentas();
+  renderCelulares(celularesData);
   renderUsers();
   renderReportTech();
   renderClientes(clientesData);
@@ -84,6 +84,7 @@ const navConfig = {
   ordenes:   { title: 'Órdenes de Servicio',   sub: 'Registro y seguimiento de reparaciones',   btn: '+ Nueva Orden'    },
   stock:     { title: 'Control de Stock',      sub: 'Inventario de repuestos tecnológicos',     btn: '+ Agregar repuesto'},
   ventas:    { title: 'Ventas',                sub: 'Registro de ingresos por servicio y venta',btn: '+ Registrar venta' },
+  celulares: { title: 'Venta de Celulares',    sub: 'Compra y venta de equipos nuevos y usados', btn: '+ Registrar venta' },
   reportes:  { title: 'Reportes',              sub: 'Análisis operativo y financiero',          btn: 'Exportar PDF'     },
   clientes:  { title: 'Clientes',              sub: 'Base de datos de clientes atendidos',      btn: '+ Nuevo cliente'  },
   usuarios:  { title: 'Usuarios / Técnicos',   sub: 'Gestión de accesos y roles del sistema',   btn: '+ Nuevo usuario'  },
@@ -100,15 +101,27 @@ function nav(id, el) {
   document.getElementById('topbar-sub').textContent   = cfg.sub   || '';
   document.getElementById('topbar-btn').textContent   = cfg.btn   || '';
   document.getElementById('topbar-btn').onclick = () => topAction(id);
+  closeSidebarMobile(); // en móvil, cierra el menú al elegir una sección
 }
 
 function topAction(id) {
   if (id === 'dashboard' || id === 'ordenes') openModal('orden');
   else if (id === 'stock')   openModal('repuesto');
   else if (id === 'ventas')  openModal('venta');
+  else if (id === 'celulares') document.getElementById('cel-modelo')?.focus();
   else if (id === 'clientes')openModal('cliente');
   else if (id === 'recibos') openModal('recibo-manual');
   else alert(navConfig[id]?.btn || 'Acción');
+}
+
+// ===== SIDEBAR RESPONSIVE (drawer en móvil) =====
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-backdrop').classList.toggle('open');
+}
+function closeSidebarMobile() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
 }
 
 // ===== HELPERS =====
@@ -189,13 +202,11 @@ function filterSucursal(v) {
 function verReciboOrden(code) {
   const o = ordersData.find(x=>x.code===code);
   if (!o) return;
-  // Buscar si ya existe recibo para esta orden
   const existente = recibosData.find(r=>r.orden===o.code);
   if (existente) {
     mostrarVistaPrevia(existente);
     return;
   }
-  // Generar automáticamente con datos de la orden
   if (o.monto <= 0) {
     alert('Esta orden aún no tiene monto asignado.\nVe a "Editar" para ingresar el precio del servicio.');
     return;
@@ -236,10 +247,8 @@ function editarOrden(code) {
   document.getElementById('edit-order-service').value = o.service;
   document.getElementById('edit-order-monto').value   = o.monto||0;
   document.getElementById('edit-order-obs').value     = o.obs||'';
-  // status
   const ss = document.getElementById('edit-order-status');
   for(let i=0;i<ss.options.length;i++) if(ss.options[i].value===o.status){ss.selectedIndex=i;break;}
-  // tech
   const ts = document.getElementById('edit-order-tech');
   for(let i=0;i<ts.options.length;i++) if(ts.options[i].value===o.techCode){ts.selectedIndex=i;break;}
   openModal('editar-orden');
@@ -275,10 +284,8 @@ function guardarOrden() {
   const techCode= document.getElementById('modal-tech').value;
   if (!client||!device||!service) { alert('Complete: Cliente, Equipo y Servicio.'); return; }
   const code = `#OS-00${orderCounter++}`;
-  // Si es técnico, asignar automáticamente
   const assignedTech = currentUser && currentUser.rol === 'Técnico' ? currentUser.techCode : techCode;
   ordersData.unshift({ code, client, phone, device, service, techCode: assignedTech, branch, status:'Recepción', date:nowDate(), monto, obs });
-  // Agregar cliente si no existe
   if (!clientesData.find(c=>c.phone===phone&&c.name===client)) {
     clientesData.push({ id:`CLI-${String(cliCounter).padStart(3,'0')}`, name:client, phone, branch, visits:1, lastVisit:nowDate() });
     cliCounter++;
@@ -329,7 +336,6 @@ function filterStock(q) {
   ));
 }
 
-// Ajustar stock individual
 function ajustarStock(id) {
   const s = stockData.find(x=>x.id===id);
   if (!s) return;
@@ -356,7 +362,6 @@ function guardarAjusteStock() {
   renderStock(stockData);
 }
 
-// Editar repuesto completo
 function editarRepuesto(id) {
   const s = stockData.find(x=>x.id===id);
   if (!s) return;
@@ -382,7 +387,6 @@ function guardarEdicionRepuesto() {
   renderStock(stockData);
 }
 
-// Nuevo repuesto manual
 function guardarRepuesto() {
   const name   = document.getElementById('new-rep-name').value.trim();
   const cat    = document.getElementById('new-rep-cat').value.trim();
@@ -436,6 +440,76 @@ function registrarVenta() {
   alert('✓ Venta registrada correctamente.');
 }
 
+// ===== VENTA DE CELULARES =====
+let celularesData = [];
+let celCounter = 1;
+
+function renderCelulares(data) {
+  const vendidos  = data.length;
+  const ingresos  = data.reduce((a,c)=>a+c.venta, 0);
+  const ganancia  = data.reduce((a,c)=>a+(c.venta - c.compra), 0);
+
+  document.getElementById('cel-vendidos').textContent  = vendidos;
+  document.getElementById('cel-ingresos').textContent  = 'Bs ' + fmtMonto(ingresos);
+  document.getElementById('cel-ganancia').textContent  = 'Bs ' + fmtMonto(ganancia);
+  document.getElementById('cel-inventario').textContent = 0;
+
+  const tbody = document.getElementById('celulares-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--gray-400);padding:24px">No se han registrado ventas de celulares aún</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = [...data].reverse().map(c => `
+    <tr>
+      <td>${c.fecha}</td>
+      <td>${c.modelo}</td>
+      <td><code class="code-tag" style="font-size:10px">${c.imei||'—'}</code></td>
+      <td>${c.estado}</td>
+      <td>${c.cliente||'—'}</td>
+      <td>Bs ${fmtMonto(c.compra)}</td>
+      <td style="font-weight:600">Bs ${fmtMonto(c.venta)}</td>
+      <td style="font-weight:600;color:${(c.venta-c.compra)>=0?'var(--success)':'var(--danger)'}">Bs ${fmtMonto(c.venta-c.compra)}</td>
+      <td>${c.branch}</td>
+    </tr>`).join('');
+}
+
+function filterCelulares(q) {
+  const ql = q.toLowerCase();
+  renderCelulares(celularesData.filter(c =>
+    c.modelo.toLowerCase().includes(ql) ||
+    (c.imei||'').toLowerCase().includes(ql) ||
+    (c.cliente||'').toLowerCase().includes(ql)
+  ));
+}
+
+function registrarVentaCelular() {
+  const modelo  = document.getElementById('cel-modelo').value.trim();
+  const imei    = document.getElementById('cel-imei').value.trim();
+  const estado  = document.getElementById('cel-estado').value;
+  const cliente = document.getElementById('cel-cliente').value.trim();
+  const compra  = parseFloat(document.getElementById('cel-compra').value)||0;
+  const venta   = parseFloat(document.getElementById('cel-venta').value)||0;
+  const pago    = document.getElementById('cel-pago').value;
+  const branch  = document.getElementById('cel-branch').value;
+
+  if (!modelo || !venta) { alert('Complete al menos Marca/Modelo y Precio de venta.'); return; }
+
+  celularesData.push({
+    id: `CEL-${String(celCounter).padStart(3,'0')}`,
+    modelo, imei, estado, cliente, compra, venta, pago, branch,
+    fecha: nowDate(),
+  });
+  celCounter++;
+
+  renderCelulares(celularesData);
+
+  ['cel-modelo','cel-imei','cel-cliente','cel-compra','cel-venta'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  alert('✓ Venta de celular registrada correctamente.');
+}
+
 // ===== CLIENTES =====
 function renderClientes(data) {
   document.getElementById('clientes-body').innerHTML = data.map(c=>`
@@ -471,7 +545,6 @@ function guardarCliente() {
   renderClientes(clientesData);
 }
 
-// Ver recibos de un cliente
 function verRecibosCliente(nombre) {
   const recs = recibosData.filter(r=>r.cliente===nombre);
   if (recs.length===0) { alert(`El cliente "${nombre}" no tiene recibos generados aún.`); return; }
@@ -555,7 +628,6 @@ function generarRecibo() {
   const tipo     = document.getElementById('recibo-tipo').value;
   const orden    = document.getElementById('recibo-orden').value || '—';
   if (!cliente||!equipo||!servicio||!monto) { alert('Complete: Cliente, Equipo, Servicio y Monto.'); return; }
-  // Verificar si ya existe con ese número
   if (recibosData.find(r=>r.numRecibo===numRecibo)) {
     alert(`Ya existe el recibo ${numRecibo}. Cambie el número o deje vacío para generar automáticamente.`);
     return;
@@ -702,7 +774,6 @@ function cambiarEstado(code) {
   document.getElementById('estado-order-code').textContent = o.code;
   document.getElementById('estado-order-info').textContent = `${o.client} · ${o.device}`;
   document.getElementById('estado-hidden-code').value = o.code;
-  // marcar estado actual
   const ss = document.getElementById('estado-select');
   for (let i = 0; i < ss.options.length; i++) {
     if (ss.options[i].value === o.status) { ss.selectedIndex = i; break; }
@@ -735,17 +806,14 @@ function editarRecibo(numRecibo) {
   document.getElementById('edit-rec-monto').value     = r.monto;
   document.getElementById('edit-rec-obs').value       = r.obs || '';
 
-  // Pago
   const ps = document.getElementById('edit-rec-pago');
   for (let i = 0; i < ps.options.length; i++) {
     if (ps.options[i].value === r.pago) { ps.selectedIndex = i; break; }
   }
-  // Sucursal
   const ss = document.getElementById('edit-rec-sucursal');
   for (let i = 0; i < ss.options.length; i++) {
     if (r.sucursal && r.sucursal.includes(ss.options[i].text)) { ss.selectedIndex = i; break; }
   }
-  // Técnico — poblar y seleccionar
   const ts = document.getElementById('edit-rec-tech');
   ts.innerHTML = tecnicos.filter(t => t.active)
     .map(t => `<option value="${t.code}" ${t.code === r.techCode ? 'selected' : ''}>${t.code} — ${t.name}</option>`)

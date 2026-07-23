@@ -321,7 +321,7 @@ function renderStock(data) {
         <td>
           <div style="display:flex;gap:4px">
             <button class="btn-sm" onclick="editarRepuesto('${s.id}')">Editar</button>
-            <button class="btn-sm btn-sm-primary" onclick="ajustarStock('${s.id}')">Stock</button>
+            <button class="btn-sm btn-sm-primary" onclick="ajustarStock('${s.id}')">${s.qty===0?'Reabastecer':'Stock'}</button>
           </div>
         </td>
       </tr>`;
@@ -351,15 +351,63 @@ function guardarAjusteStock() {
   const id  = document.getElementById('adj-id').value;
   const idx = stockData.findIndex(x=>x.id===id);
   if (idx<0) return;
+  const s   = stockData[idx];
+
   const op  = document.getElementById('adj-operacion').value;
-  const val = parseInt(document.getElementById('adj-cantidad').value)||0;
-  if (op==='set')      stockData[idx].qty  = val;
-  else if (op==='add') stockData[idx].qty += val;
-  else if (op==='sub') stockData[idx].qty  = Math.max(0, stockData[idx].qty - val);
-  stockData[idx].min    = parseInt(document.getElementById('adj-min').value)||stockData[idx].min;
-  stockData[idx].precio = parseFloat(document.getElementById('adj-precio').value)||stockData[idx].precio;
+  const val = parseInt(document.getElementById('adj-cantidad').value);
+  const minVal    = parseInt(document.getElementById('adj-min').value);
+  const precioVal = parseFloat(document.getElementById('adj-precio').value);
+
+  // ===== Validaciones de cantidad =====
+  if (isNaN(val) || val < 0) {
+    alert('La cantidad debe ser un número positivo.');
+    return;
+  }
+
+  let nuevaQty = s.qty;
+
+  if (op === 'sub') {
+    if (s.qty === 0) {
+      alert(`"${s.name}" ya está SIN STOCK (0 unidades). Debes reabastecer antes de restar.`);
+      return;
+    }
+    if (val > s.qty) {
+      alert(`No puedes restar ${val} unidades: solo hay ${s.qty} disponibles de "${s.name}".`);
+      return;
+    }
+    nuevaQty = s.qty - val;
+  } else if (op === 'add') {
+    nuevaQty = s.qty + val;
+  } else if (op === 'set') {
+    nuevaQty = val;
+  }
+
+  // Confirmación antes de dejar el producto en 0
+  if (nuevaQty === 0 && s.qty !== 0) {
+    const continuar = confirm(`Este ajuste dejará "${s.name}" SIN STOCK (0 unidades).\n¿Deseas continuar?`);
+    if (!continuar) return;
+  }
+
+  // ===== Validaciones de mínimo y precio =====
+  if (isNaN(minVal) || minVal < 1) {
+    alert('El stock mínimo debe ser al menos 1 unidad.');
+    return;
+  }
+  if (isNaN(precioVal) || precioVal < 0) {
+    alert('El precio no puede ser negativo.');
+    return;
+  }
+
+  stockData[idx].qty    = nuevaQty;
+  stockData[idx].min    = minVal;
+  stockData[idx].precio = precioVal;
   closeModal();
   renderStock(stockData);
+
+  // Aviso adicional si quedó en estado crítico (pero no en 0)
+  if (nuevaQty > 0 && nuevaQty < minVal) {
+    alert(`⚠️ "${s.name}" quedó en nivel CRÍTICO (${nuevaQty} de ${minVal} unidades mínimas). Considera reabastecer pronto.`);
+  }
 }
 
 function editarRepuesto(id) {
@@ -378,11 +426,37 @@ function guardarEdicionRepuesto() {
   const id  = document.getElementById('edit-rep-id').value;
   const idx = stockData.findIndex(x=>x.id===id);
   if (idx<0) return;
-  stockData[idx].name   = document.getElementById('edit-rep-name').value.trim();
-  stockData[idx].cat    = document.getElementById('edit-rep-cat').value.trim();
-  stockData[idx].qty    = parseInt(document.getElementById('edit-rep-qty').value)||0;
-  stockData[idx].min    = parseInt(document.getElementById('edit-rep-min').value)||1;
-  stockData[idx].precio = parseFloat(document.getElementById('edit-rep-precio').value)||0;
+
+  const qty    = parseInt(document.getElementById('edit-rep-qty').value);
+  const min    = parseInt(document.getElementById('edit-rep-min').value);
+  const precio = parseFloat(document.getElementById('edit-rep-precio').value);
+
+  if (isNaN(qty) || qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
+  if (isNaN(min) || min < 1) { alert('El stock mínimo debe ser al menos 1 unidad.'); return; }
+  if (isNaN(precio) || precio < 0) { alert('El precio no puede ser negativo.'); return; }
+
+  const nuevoNombre = document.getElementById('edit-rep-name').value.trim();
+  const nuevaCat    = document.getElementById('edit-rep-cat').value.trim();
+  const yaExiste = stockData.some(s =>
+    s.id !== id &&
+    s.name.trim().toLowerCase() === nuevoNombre.toLowerCase() &&
+    s.cat.trim().toLowerCase()  === nuevaCat.toLowerCase()
+  );
+  if (yaExiste) {
+    alert(`Ya existe otro repuesto llamado "${nuevoNombre}" en la categoría "${nuevaCat}". Usa un nombre distinto o edita ese repuesto directamente.`);
+    return;
+  }
+
+  if (qty === 0 && stockData[idx].qty !== 0) {
+    const continuar = confirm(`Este cambio dejará "${stockData[idx].name}" SIN STOCK (0 unidades).\n¿Deseas continuar?`);
+    if (!continuar) return;
+  }
+
+  stockData[idx].name   = nuevoNombre;
+  stockData[idx].cat    = nuevaCat;
+  stockData[idx].qty    = qty;
+  stockData[idx].min    = min;
+  stockData[idx].precio = precio;
   closeModal();
   renderStock(stockData);
 }
@@ -390,10 +464,29 @@ function guardarEdicionRepuesto() {
 function guardarRepuesto() {
   const name   = document.getElementById('new-rep-name').value.trim();
   const cat    = document.getElementById('new-rep-cat').value.trim();
-  const qty    = parseInt(document.getElementById('new-rep-qty').value)||0;
-  const min    = parseInt(document.getElementById('new-rep-min').value)||1;
-  const precio = parseFloat(document.getElementById('new-rep-precio').value)||0;
+  const qty    = parseInt(document.getElementById('new-rep-qty').value);
+  const min    = parseInt(document.getElementById('new-rep-min').value);
+  const precio = parseFloat(document.getElementById('new-rep-precio').value);
+
   if (!name||!cat) { alert('Complete nombre y categoría.'); return; }
+  if (isNaN(qty) || qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
+  if (isNaN(min) || min < 1) { alert('El stock mínimo debe ser al menos 1 unidad.'); return; }
+  if (isNaN(precio) || precio < 0) { alert('El precio no puede ser negativo.'); return; }
+
+  const yaExiste = stockData.some(s =>
+    s.name.trim().toLowerCase() === name.toLowerCase() &&
+    s.cat.trim().toLowerCase()  === cat.toLowerCase()
+  );
+  if (yaExiste) {
+    alert(`Ya existe un repuesto llamado "${name}" en la categoría "${cat}".\nSi quieres sumar unidades, usa el botón "Stock" de ese repuesto en vez de crear uno nuevo.`);
+    return;
+  }
+
+  if (qty === 0) {
+    const continuar = confirm(`Vas a registrar "${name}" SIN STOCK inicial (0 unidades).\n¿Deseas continuar de todos modos?`);
+    if (!continuar) return;
+  }
+
   const id = `REP-${String(repCounter).padStart(3,'0')}`;
   repCounter++;
   stockData.push({ id, name, cat, qty, min, precio });

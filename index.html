@@ -261,26 +261,56 @@
           <div class="metric-card"><div class="metric-label">Ganancia total</div><div class="metric-value" id="cel-ganancia">Bs 0</div><div class="metric-trend positive">margen sobre compra</div></div>
           <div class="metric-card"><div class="metric-label">En inventario</div><div class="metric-value" id="cel-inventario">0</div><div class="metric-trend">equipos disponibles</div></div>
         </div>
+
+        <!-- PASO 1: Ingresar equipo al inventario -->
         <div class="card">
-          <div class="card-header"><h3 class="card-title">Registrar venta de celular</h3></div>
+          <div class="card-header"><h3 class="card-title">1. Ingresar celular al inventario</h3></div>
           <div class="form-grid">
-            <div class="form-group"><label>Marca y modelo *</label><input type="text" id="cel-modelo" placeholder="Ej: Samsung Galaxy A54"></div>
-            <div class="form-group"><label>IMEI</label><input type="text" id="cel-imei" placeholder="15 dígitos"></div>
+            <div class="form-group"><label>Marca y modelo *</label><input type="text" id="cel-inv-modelo" placeholder="Ej: Samsung Galaxy A54"></div>
+            <div class="form-group"><label>IMEI *</label><input type="text" id="cel-inv-imei" placeholder="15 dígitos"></div>
             <div class="form-group"><label>Estado del equipo</label>
-              <select id="cel-estado"><option>Nuevo</option><option>Usado — Excelente</option><option>Usado — Bueno</option><option>Reacondicionado</option></select>
+              <select id="cel-inv-estado"><option>Nuevo</option><option>Usado — Excelente</option><option>Usado — Bueno</option><option>Reacondicionado</option></select>
+            </div>
+            <div class="form-group"><label>Precio de compra (Bs) *</label><input type="number" id="cel-inv-compra" placeholder="0.00"></div>
+            <div class="form-group"><label>Sucursal</label>
+              <select id="cel-inv-branch"><option>KevSolutions</option><option>Upea</option></select>
+            </div>
+          </div>
+          <div style="padding:0 18px 16px"><button class="btn-primary" onclick="agregarInventarioCelular()">+ Agregar al inventario</button></div>
+        </div>
+
+        <!-- PASO 2: Inventario disponible -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Inventario disponible</h3>
+            <input class="input-search" placeholder="Buscar por modelo o IMEI..." oninput="filterInventarioCelulares(this.value)">
+          </div>
+          <table class="table">
+            <thead><tr><th>Fecha ingreso</th><th>Modelo</th><th>IMEI</th><th>Estado</th><th>Compra</th><th>Sucursal</th><th></th></tr></thead>
+            <tbody id="inventario-cel-body"><tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:24px">No hay equipos en inventario. Agrega uno arriba.</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- PASO 3: Vender un equipo del inventario -->
+        <div class="card" id="card-vender-celular">
+          <div class="card-header"><h3 class="card-title">2. Vender un equipo del inventario</h3></div>
+          <div class="form-grid">
+            <div class="form-group" style="grid-column:1 / -1">
+              <label>Equipo a vender *</label>
+              <select id="cel-venta-select" onchange="precargarVentaCelular(this.value)">
+                <option value="">— Seleccione un equipo del inventario —</option>
+              </select>
             </div>
             <div class="form-group"><label>Cliente</label><input type="text" id="cel-cliente" placeholder="Nombre del cliente"></div>
-            <div class="form-group"><label>Precio de compra (Bs)</label><input type="number" id="cel-compra" placeholder="0.00"></div>
             <div class="form-group"><label>Precio de venta (Bs) *</label><input type="number" id="cel-venta" placeholder="0.00"></div>
             <div class="form-group"><label>Método de pago</label>
               <select id="cel-pago"><option>Efectivo</option><option>QR (transferencia)</option><option>Transferencia bancaria</option><option>Cuotas</option></select>
             </div>
-            <div class="form-group"><label>Sucursal</label>
-              <select id="cel-branch"><option>KevSolutions</option><option>Upea</option></select>
-            </div>
           </div>
-          <div style="padding:0 18px 16px"><button class="btn-primary" onclick="registrarVentaCelular()">Registrar venta</button></div>
+          <div style="padding:0 18px 16px"><button class="btn-primary" onclick="registrarVentaCelular()">Confirmar venta</button></div>
         </div>
+
+        <!-- Historial -->
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Celulares vendidos</h3>

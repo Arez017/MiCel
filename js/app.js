@@ -70,6 +70,7 @@ function initApp() {
   renderOrders(ordersData);
   renderStock(stockData);
   renderVentas();
+  renderInventarioCelulares(celularesInventario);
   renderCelulares(celularesData);
   renderUsers();
   renderReportTech();
@@ -534,9 +535,160 @@ function registrarVenta() {
 }
 
 // ===== VENTA DE CELULARES =====
-let celularesData = [];
+let celularesInventario = []; // equipos ingresados: {id, imei, modelo, estado, compra, branch, fechaIngreso, vendido}
+let celularesData = [];       // historial de ventas ya realizadas
+let celInvCounter = 1;
 let celCounter = 1;
 
+// ---- PASO 1: Ingresar equipo al inventario ----
+function agregarInventarioCelular() {
+  const modelo = document.getElementById('cel-inv-modelo').value.trim();
+  const imei   = document.getElementById('cel-inv-imei').value.trim();
+  const estado = document.getElementById('cel-inv-estado').value;
+  const compra = parseFloat(document.getElementById('cel-inv-compra').value);
+  const branch = document.getElementById('cel-inv-branch').value;
+
+  if (!modelo) { alert('Complete la marca y modelo del equipo.'); return; }
+  if (!imei || imei.length < 5) { alert('Ingrese un IMEI válido (mínimo 5 dígitos).'); return; }
+  if (isNaN(compra) || compra <= 0) { alert('El precio de compra debe ser mayor a 0.'); return; }
+
+  // No permite IMEIs repetidos en el inventario (ni siquiera si el otro ya se vendió, un IMEI es único de por vida)
+  const yaExiste = celularesInventario.some(c => c.imei === imei);
+  if (yaExiste) {
+    alert(`Ya existe un equipo registrado con el IMEI "${imei}" en el inventario.`);
+    return;
+  }
+
+  celularesInventario.push({
+    id: `CELINV-${String(celInvCounter).padStart(3,'0')}`,
+    imei, modelo, estado, compra, branch,
+    fechaIngreso: nowDate(),
+    vendido: false,
+  });
+  celInvCounter++;
+
+  renderInventarioCelulares(celularesInventario);
+  renderCelulares(celularesData); // para refrescar el contador de "En inventario"
+
+  ['cel-inv-modelo','cel-inv-imei','cel-inv-compra'].forEach(id => document.getElementById(id).value = '');
+  alert('✓ Equipo agregado al inventario.');
+}
+
+function renderInventarioCelulares(data) {
+  const disponibles = data.filter(c => !c.vendido);
+  const tbody = document.getElementById('inventario-cel-body');
+
+  if (!disponibles.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:24px">No hay equipos en inventario. Agrega uno arriba.</td></tr>';
+  } else {
+    tbody.innerHTML = disponibles.map(c => `
+      <tr>
+        <td>${c.fechaIngreso}</td>
+        <td>${c.modelo}</td>
+        <td><code class="code-tag" style="font-size:10px">${c.imei}</code></td>
+        <td>${c.estado}</td>
+        <td>Bs ${fmtMonto(c.compra)}</td>
+        <td>${c.branch}</td>
+        <td><button class="btn-sm btn-sm-primary" onclick="irAVenderCelular('${c.id}')">Vender</button></td>
+      </tr>`).join('');
+  }
+
+  populateSelectVentaCelular(disponibles);
+  document.getElementById('cel-inventario').textContent = disponibles.length;
+}
+
+function filterInventarioCelulares(q) {
+  const ql = q.toLowerCase();
+  const filtrado = celularesInventario.filter(c => !c.vendido && (
+    c.modelo.toLowerCase().includes(ql) || c.imei.toLowerCase().includes(ql)
+  ));
+  // Renderiza solo la tabla de inventario sin tocar el select global (evita perder la selección)
+  const tbody = document.getElementById('inventario-cel-body');
+  if (!filtrado.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:24px">Sin resultados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtrado.map(c => `
+    <tr>
+      <td>${c.fechaIngreso}</td>
+      <td>${c.modelo}</td>
+      <td><code class="code-tag" style="font-size:10px">${c.imei}</code></td>
+      <td>${c.estado}</td>
+      <td>Bs ${fmtMonto(c.compra)}</td>
+      <td>${c.branch}</td>
+      <td><button class="btn-sm btn-sm-primary" onclick="irAVenderCelular('${c.id}')">Vender</button></td>
+    </tr>`).join('');
+}
+
+// ---- PASO 2: Vender un equipo del inventario ----
+function populateSelectVentaCelular(disponibles) {
+  const sel = document.getElementById('cel-venta-select');
+  const seleccionActual = sel.value;
+  sel.innerHTML = '<option value="">— Seleccione un equipo del inventario —</option>' +
+    disponibles.map(c => `<option value="${c.id}">${c.modelo} — IMEI ${c.imei}</option>`).join('');
+  // mantiene la selección si sigue disponible
+  if (disponibles.some(c => c.id === seleccionActual)) sel.value = seleccionActual;
+}
+
+function irAVenderCelular(invId) {
+  document.getElementById('cel-venta-select').value = invId;
+  precargarVentaCelular(invId);
+  document.getElementById('card-vender-celular').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function precargarVentaCelular(invId) {
+  if (!invId) return;
+  const equipo = celularesInventario.find(c => c.id === invId);
+  if (!equipo) return;
+  // Sugerencia de precio de venta con un margen del 20% sobre la compra (solo referencia, editable)
+  const sugerido = Math.round(equipo.compra * 1.2);
+  document.getElementById('cel-venta').value = sugerido;
+}
+
+function registrarVentaCelular() {
+  const invId   = document.getElementById('cel-venta-select').value;
+  const cliente = document.getElementById('cel-cliente').value.trim();
+  const venta   = parseFloat(document.getElementById('cel-venta').value);
+  const pago    = document.getElementById('cel-pago').value;
+
+  if (!invId) { alert('Seleccione un equipo del inventario para vender.'); return; }
+  const equipo = celularesInventario.find(c => c.id === invId);
+  if (!equipo) { alert('El equipo seleccionado ya no existe en el inventario.'); return; }
+  if (equipo.vendido) { alert('Este equipo ya fue vendido anteriormente.'); return; }
+  if (isNaN(venta) || venta <= 0) { alert('El precio de venta debe ser mayor a 0.'); return; }
+
+  if (venta < equipo.compra) {
+    const continuar = confirm(`Vas a vender "${equipo.modelo}" por Bs ${fmtMonto(venta)}, por DEBAJO de su precio de compra (Bs ${fmtMonto(equipo.compra)}).\n¿Confirmas que quieres registrar esta venta con pérdida?`);
+    if (!continuar) return;
+  }
+
+  // Marca el equipo como vendido (ya no vuelve a aparecer disponible)
+  equipo.vendido = true;
+
+  celularesData.push({
+    id: `CEL-${String(celCounter).padStart(3,'0')}`,
+    modelo: equipo.modelo,
+    imei: equipo.imei,
+    estado: equipo.estado,
+    cliente: cliente || '—',
+    compra: equipo.compra,
+    venta,
+    pago,
+    branch: equipo.branch,
+    fecha: nowDate(),
+  });
+  celCounter++;
+
+  renderInventarioCelulares(celularesInventario);
+  renderCelulares(celularesData);
+
+  document.getElementById('cel-venta-select').value = '';
+  document.getElementById('cel-cliente').value = '';
+  document.getElementById('cel-venta').value = '';
+  alert('✓ Venta de celular registrada correctamente.');
+}
+
+// ---- Historial de ventas ----
 function renderCelulares(data) {
   const vendidos  = data.length;
   const ingresos  = data.reduce((a,c)=>a+c.venta, 0);
@@ -545,7 +697,7 @@ function renderCelulares(data) {
   document.getElementById('cel-vendidos').textContent  = vendidos;
   document.getElementById('cel-ingresos').textContent  = 'Bs ' + fmtMonto(ingresos);
   document.getElementById('cel-ganancia').textContent  = 'Bs ' + fmtMonto(ganancia);
-  document.getElementById('cel-inventario').textContent = 0;
+  document.getElementById('cel-inventario').textContent = celularesInventario.filter(c=>!c.vendido).length;
 
   const tbody = document.getElementById('celulares-body');
   if (!data.length) {
@@ -574,33 +726,6 @@ function filterCelulares(q) {
     (c.imei||'').toLowerCase().includes(ql) ||
     (c.cliente||'').toLowerCase().includes(ql)
   ));
-}
-
-function registrarVentaCelular() {
-  const modelo  = document.getElementById('cel-modelo').value.trim();
-  const imei    = document.getElementById('cel-imei').value.trim();
-  const estado  = document.getElementById('cel-estado').value;
-  const cliente = document.getElementById('cel-cliente').value.trim();
-  const compra  = parseFloat(document.getElementById('cel-compra').value)||0;
-  const venta   = parseFloat(document.getElementById('cel-venta').value)||0;
-  const pago    = document.getElementById('cel-pago').value;
-  const branch  = document.getElementById('cel-branch').value;
-
-  if (!modelo || !venta) { alert('Complete al menos Marca/Modelo y Precio de venta.'); return; }
-
-  celularesData.push({
-    id: `CEL-${String(celCounter).padStart(3,'0')}`,
-    modelo, imei, estado, cliente, compra, venta, pago, branch,
-    fecha: nowDate(),
-  });
-  celCounter++;
-
-  renderCelulares(celularesData);
-
-  ['cel-modelo','cel-imei','cel-cliente','cel-compra','cel-venta'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  alert('✓ Venta de celular registrada correctamente.');
 }
 
 // ===== CLIENTES =====

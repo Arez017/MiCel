@@ -301,12 +301,23 @@
                 <option value="">— Seleccione un equipo del inventario —</option>
               </select>
             </div>
-            <div class="form-group"><label>Cliente</label><input type="text" id="cel-cliente" placeholder="Nombre del cliente"></div>
+            <div class="form-group"><label>Cliente *</label><input type="text" id="cel-cliente" placeholder="Nombre del cliente"></div>
+            <div class="form-group"><label>Teléfono / CI cliente</label><input type="text" id="cel-cliente-tel" placeholder="Ej: 71234567"></div>
             <div class="form-group"><label>Precio de venta (Bs) *</label><input type="number" id="cel-venta" placeholder="0.00"></div>
             <div class="form-group"><label>Método de pago</label>
-              <select id="cel-pago"><option>Efectivo</option><option>QR (transferencia)</option><option>Transferencia bancaria</option><option>Cuotas</option></select>
+              <select id="cel-pago" onchange="toggleCuotasFields()"><option>Efectivo</option><option>QR (transferencia)</option><option>Transferencia bancaria</option><option>Cuotas</option></select>
             </div>
           </div>
+
+          <!-- Campos que solo aparecen si el método de pago es "Cuotas" -->
+          <div class="form-grid hidden" id="cel-cuotas-fields" style="border-top:1px solid var(--gray-100)">
+            <div class="form-group"><label>Pago inicial (Bs) *</label><input type="number" id="cel-cuotas-inicial" placeholder="0.00"></div>
+            <div class="form-group"><label>Número de cuotas *</label><input type="number" id="cel-cuotas-numero" placeholder="Ej: 6" min="1"></div>
+            <div class="form-group"><label>Frecuencia de pago</label>
+              <select id="cel-cuotas-frecuencia"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select>
+            </div>
+          </div>
+
           <div style="padding:0 18px 16px"><button class="btn-primary" onclick="registrarVentaCelular()">Confirmar venta</button></div>
         </div>
 
@@ -317,8 +328,8 @@
             <input class="input-search" placeholder="Buscar por modelo, IMEI o cliente..." oninput="filterCelulares(this.value)">
           </div>
           <table class="table">
-            <thead><tr><th>Fecha</th><th>Modelo</th><th>IMEI</th><th>Estado</th><th>Cliente</th><th>Compra</th><th>Venta</th><th>Ganancia</th><th>Sucursal</th></tr></thead>
-            <tbody id="celulares-body"><tr><td colspan="9" style="text-align:center;color:var(--gray-400);padding:24px">No se han registrado ventas de celulares aún</td></tr></tbody>
+            <thead><tr><th>Fecha</th><th>Modelo</th><th>IMEI</th><th>Estado</th><th>Cliente</th><th>Compra</th><th>Venta</th><th>Ganancia</th><th>Sucursal</th><th>Pago</th><th></th></tr></thead>
+            <tbody id="celulares-body"><tr><td colspan="11" style="text-align:center;color:var(--gray-400);padding:24px">No se han registrado ventas de celulares aún</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -676,6 +687,25 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: CONTRATO DE VENTA A CRÉDITO + PLAN DE PAGOS -->
+<div class="modal-overlay hidden" id="modal-contrato-cel">
+  <div class="modal-box" style="width:600px">
+    <div class="modal-header">
+      <h3>Contrato de venta a crédito</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="contrato-cel-preview" style="padding:20px;max-height:70vh;overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+      <button class="btn-primary" onclick="imprimirContratoCelular()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir contrato
+      </button>
+    </div>
+  </div>
+</div>
+
 
 
 

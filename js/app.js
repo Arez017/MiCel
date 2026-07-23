@@ -645,16 +645,24 @@ function precargarVentaCelular(invId) {
   document.getElementById('cel-venta').value = sugerido;
 }
 
+// Muestra/oculta los campos de cuotas según el método de pago elegido
+function toggleCuotasFields() {
+  const pago = document.getElementById('cel-pago').value;
+  document.getElementById('cel-cuotas-fields').classList.toggle('hidden', pago !== 'Cuotas');
+}
+
 function registrarVentaCelular() {
-  const invId   = document.getElementById('cel-venta-select').value;
-  const cliente = document.getElementById('cel-cliente').value.trim();
-  const venta   = parseFloat(document.getElementById('cel-venta').value);
-  const pago    = document.getElementById('cel-pago').value;
+  const invId    = document.getElementById('cel-venta-select').value;
+  const cliente  = document.getElementById('cel-cliente').value.trim();
+  const telefono = document.getElementById('cel-cliente-tel').value.trim();
+  const venta    = parseFloat(document.getElementById('cel-venta').value);
+  const pago     = document.getElementById('cel-pago').value;
 
   if (!invId) { alert('Seleccione un equipo del inventario para vender.'); return; }
   const equipo = celularesInventario.find(c => c.id === invId);
   if (!equipo) { alert('El equipo seleccionado ya no existe en el inventario.'); return; }
   if (equipo.vendido) { alert('Este equipo ya fue vendido anteriormente.'); return; }
+  if (!cliente) { alert('El nombre del cliente es obligatorio.'); return; }
   if (isNaN(venta) || venta <= 0) { alert('El precio de venta debe ser mayor a 0.'); return; }
 
   if (venta < equipo.compra) {
@@ -662,20 +670,39 @@ function registrarVentaCelular() {
     if (!continuar) return;
   }
 
+  // ===== Si es a Cuotas, validar y armar el plan de pagos =====
+  let planPagos = null;
+  if (pago === 'Cuotas') {
+    if (!telefono) { alert('Para ventas a crédito, el teléfono/CI del cliente es obligatorio (necesario para el contrato y cobranza).'); return; }
+
+    const inicial = parseFloat(document.getElementById('cel-cuotas-inicial').value);
+    const numero  = parseInt(document.getElementById('cel-cuotas-numero').value);
+    const frecuencia = document.getElementById('cel-cuotas-frecuencia').value;
+
+    if (isNaN(inicial) || inicial < 0) { alert('El pago inicial no puede ser negativo.'); return; }
+    if (inicial >= venta) { alert('El pago inicial no puede ser mayor o igual al precio de venta (si no, no es una venta a crédito).'); return; }
+    if (isNaN(numero) || numero < 1) { alert('El número de cuotas debe ser al menos 1.'); return; }
+
+    planPagos = generarPlanPagos(venta, inicial, numero, frecuencia);
+  }
+
   // Marca el equipo como vendido (ya no vuelve a aparecer disponible)
   equipo.vendido = true;
 
+  const venta_id = `CEL-${String(celCounter).padStart(3,'0')}`;
   celularesData.push({
-    id: `CEL-${String(celCounter).padStart(3,'0')}`,
+    id: venta_id,
     modelo: equipo.modelo,
     imei: equipo.imei,
     estado: equipo.estado,
-    cliente: cliente || '—',
+    cliente,
+    telefono: telefono || '—',
     compra: equipo.compra,
     venta,
     pago,
     branch: equipo.branch,
     fecha: nowDate(),
+    planPagos, // null si no es a cuotas
   });
   celCounter++;
 
@@ -684,8 +711,137 @@ function registrarVentaCelular() {
 
   document.getElementById('cel-venta-select').value = '';
   document.getElementById('cel-cliente').value = '';
+  document.getElementById('cel-cliente-tel').value = '';
   document.getElementById('cel-venta').value = '';
-  alert('✓ Venta de celular registrada correctamente.');
+  document.getElementById('cel-pago').value = 'Efectivo';
+  toggleCuotasFields();
+
+  if (pago === 'Cuotas') {
+    alert('✓ Venta a crédito registrada. Se generó el plan de pagos y el contrato — puedes verlo/imprimirlo desde el historial.');
+    mostrarContrato(venta_id);
+  } else {
+    alert('✓ Venta de celular registrada correctamente.');
+  }
+}
+
+// Genera el cronograma de cuotas con fechas según la frecuencia elegida
+function generarPlanPagos(total, inicial, numero, frecuencia) {
+  const saldo = total - inicial;
+  const montoBase = Math.floor((saldo / numero) * 100) / 100;
+  const diasPorPeriodo = frecuencia === 'semanal' ? 7 : frecuencia === 'quincenal' ? 15 : 30;
+
+  const cuotas = [];
+  let acumulado = 0;
+  for (let i = 1; i <= numero; i++) {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + diasPorPeriodo * i);
+    // La última cuota absorbe el redondeo para que la suma cuadre exacto
+    const monto = (i === numero) ? Math.round((saldo - acumulado) * 100) / 100 : montoBase;
+    acumulado += monto;
+    cuotas.push({
+      numero: i,
+      fecha: fecha.toLocaleDateString('es-BO'),
+      monto,
+      pagada: false,
+    });
+  }
+
+  return { total, inicial, saldo, numero, frecuencia, cuotas };
+}
+
+// Marca una cuota específica como pagada (o la des-marca si se vuelve a tocar)
+function marcarCuotaPagada(ventaId, numeroCuota) {
+  const venta = celularesData.find(v => v.id === ventaId);
+  if (!venta || !venta.planPagos) return;
+  const cuota = venta.planPagos.cuotas.find(c => c.numero === numeroCuota);
+  if (!cuota) return;
+  cuota.pagada = !cuota.pagada;
+  mostrarContrato(ventaId); // refresca la vista con el nuevo estado
+}
+
+// ===== CONTRATO DE VENTA A CRÉDITO =====
+function mostrarContrato(ventaId) {
+  const v = celularesData.find(x => x.id === ventaId);
+  if (!v || !v.planPagos) { alert('Esta venta no tiene un plan de pagos asociado.'); return; }
+  const p = v.planPagos;
+
+  const filasCuotas = p.cuotas.map(c => `
+    <tr>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">Cuota ${c.numero}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">${c.fecha}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:right">Bs ${fmtMonto(c.monto)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center">
+        <span style="font-size:11px;font-weight:600;color:${c.pagada?'#0e9f6e':'#c27803'}">${c.pagada?'✓ Pagada':'Pendiente'}</span>
+      </td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center">
+        <button class="btn-sm" onclick="marcarCuotaPagada('${v.id}', ${c.numero})">${c.pagada?'Desmarcar':'Marcar pagada'}</button>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('contrato-cel-preview').innerHTML = `
+    <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.8">
+      <div style="text-align:center;margin-bottom:16px;border-bottom:2px dashed #e5e7eb;padding-bottom:14px">
+        <div style="font-size:22px;font-weight:700;color:#ff1440;letter-spacing:2px">MICEL</div>
+        <div style="font-size:11px;color:#6b7280">Contrato de venta a crédito — Equipo móvil</div>
+        <div style="font-size:11px;color:#6b7280">Sucursal: ${v.branch} · El Alto, Bolivia</div>
+      </div>
+
+      <p style="margin-bottom:10px">
+        Por medio del presente documento, <strong>${v.cliente}</strong>
+        (Tel./CI: ${v.telefono}) declara adquirir de <strong>MiCel</strong> el equipo detallado a
+        continuación, bajo la modalidad de <strong>venta a crédito en cuotas</strong>, comprometiéndose
+        a cancelar el saldo pendiente según el cronograma acordado.
+      </p>
+
+      <div style="background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Datos del equipo</div>
+        <div><strong>Modelo:</strong> ${v.modelo}</div>
+        <div><strong>IMEI:</strong> ${v.imei}</div>
+        <div><strong>Estado:</strong> ${v.estado}</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
+        <div><strong>Precio total:</strong><br>Bs ${fmtMonto(p.total)}</div>
+        <div><strong>Pago inicial:</strong><br>Bs ${fmtMonto(p.inicial)}</div>
+        <div><strong>Saldo financiado:</strong><br>Bs ${fmtMonto(p.saldo)}</div>
+        <div><strong>Cuotas:</strong><br>${p.numero} (${p.frecuencia})</div>
+      </div>
+
+      <div style="font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:8px">Cronograma de pagos</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
+        <thead><tr style="background:#f3f4f6">
+          <th style="padding:6px 8px;text-align:left;font-size:11px">Cuota</th>
+          <th style="padding:6px 8px;text-align:left;font-size:11px">Vencimiento</th>
+          <th style="padding:6px 8px;text-align:right;font-size:11px">Monto</th>
+          <th style="padding:6px 8px;text-align:center;font-size:11px">Estado</th>
+          <th style="padding:6px 8px;text-align:center;font-size:11px"></th>
+        </tr></thead>
+        <tbody>${filasCuotas}</tbody>
+      </table>
+
+      <div style="background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:12px;font-size:11.5px;color:#713f12;margin-bottom:14px">
+        <strong>Cláusulas:</strong> El incumplimiento de 2 o más cuotas consecutivas faculta a MiCel a
+        exigir el pago total del saldo pendiente y/o suspender la garantía del equipo. El cliente
+        declara haber recibido el equipo en el estado descrito, conforme y en funcionamiento.
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:30px;font-size:12px">
+        <div style="text-align:center;width:45%;border-top:1px solid #9ca3af;padding-top:6px">Firma del Cliente</div>
+        <div style="text-align:center;width:45%;border-top:1px solid #9ca3af;padding-top:6px">Firma MiCel</div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-contrato-cel').classList.remove('hidden');
+}
+
+function imprimirContratoCelular() {
+  const contenido = document.getElementById('contrato-cel-preview').innerHTML;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Contrato MiCel</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;padding:30px;max-width:600px;margin:auto;color:#1f2937}@media print{body{padding:10px}button{display:none}}</style>
+    </head><body>${contenido}<script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
 }
 
 // ---- Historial de ventas ----
@@ -716,6 +872,8 @@ function renderCelulares(data) {
       <td style="font-weight:600">Bs ${fmtMonto(c.venta)}</td>
       <td style="font-weight:600;color:${(c.venta-c.compra)>=0?'var(--success)':'var(--danger)'}">Bs ${fmtMonto(c.venta-c.compra)}</td>
       <td>${c.branch}</td>
+      <td>${c.pago}</td>
+      <td>${c.planPagos ? `<button class="btn-sm btn-sm-primary" onclick="mostrarContrato('${c.id}')">Contrato</button>` : ''}</td>
     </tr>`).join('');
 }
 

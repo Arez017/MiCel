@@ -648,7 +648,9 @@ function precargarVentaCelular(invId) {
 // Muestra/oculta los campos de cuotas según el método de pago elegido
 function toggleCuotasFields() {
   const pago = document.getElementById('cel-pago').value;
-  document.getElementById('cel-cuotas-fields').classList.toggle('hidden', pago !== 'Cuotas');
+  const esCuotas = pago === 'Cuotas';
+  document.getElementById('cel-cuotas-fields').classList.toggle('hidden', !esCuotas);
+  document.getElementById('cel-cuotas-docs').classList.toggle('hidden', !esCuotas);
 }
 
 function registrarVentaCelular() {
@@ -670,18 +672,34 @@ function registrarVentaCelular() {
     if (!continuar) return;
   }
 
-  // ===== Si es a Cuotas, validar y armar el plan de pagos =====
+  // ===== Si es a Cuotas, validar y armar el plan de pagos (Plan Cuotas MiCel) =====
   let planPagos = null;
+  let documentos = null;
   if (pago === 'Cuotas') {
     if (!telefono) { alert('Para ventas a crédito, el teléfono/CI del cliente es obligatorio (necesario para el contrato y cobranza).'); return; }
 
-    const inicial = parseFloat(document.getElementById('cel-cuotas-inicial').value);
+    // El pago inicial es OPCIONAL (como el Plan Cuotas MiCel: se puede financiar sin inicial)
+    const inicialInput = document.getElementById('cel-cuotas-inicial').value.trim();
+    const inicial = inicialInput === '' ? 0 : parseFloat(inicialInput);
     const numero  = parseInt(document.getElementById('cel-cuotas-numero').value);
     const frecuencia = document.getElementById('cel-cuotas-frecuencia').value;
 
     if (isNaN(inicial) || inicial < 0) { alert('El pago inicial no puede ser negativo.'); return; }
     if (inicial >= venta) { alert('El pago inicial no puede ser mayor o igual al precio de venta (si no, no es una venta a crédito).'); return; }
     if (isNaN(numero) || numero < 1) { alert('El número de cuotas debe ser al menos 1.'); return; }
+    if (numero > 15) { alert('El Plan Cuotas MiCel financia hasta un máximo de 15 cuotas.'); return; }
+
+    // ===== Documentos requeridos (igual que un crédito real) =====
+    documentos = {
+      ci:     document.getElementById('doc-ci').checked,
+      boleta: document.getElementById('doc-boleta').checked,
+      luz:    document.getElementById('doc-luz').checked,
+      afp:    document.getElementById('doc-afp').checked,
+    };
+    if (!documentos.ci || !documentos.boleta || !documentos.luz || !documentos.afp) {
+      alert('Para aprobar una venta a crédito debes marcar que el cliente presentó los 4 documentos requeridos:\n· Documento de identidad vigente\n· Última boleta de pago\n· Aviso de luz de la vivienda actual\n· Extracto de AFP');
+      return;
+    }
 
     planPagos = generarPlanPagos(venta, inicial, numero, frecuencia);
   }
@@ -703,6 +721,7 @@ function registrarVentaCelular() {
     branch: equipo.branch,
     fecha: nowDate(),
     planPagos, // null si no es a cuotas
+    documentos, // null si no es a cuotas — checklist de requisitos presentados
   });
   celCounter++;
 
@@ -714,6 +733,7 @@ function registrarVentaCelular() {
   document.getElementById('cel-cliente-tel').value = '';
   document.getElementById('cel-venta').value = '';
   document.getElementById('cel-pago').value = 'Efectivo';
+  ['doc-ci','doc-boleta','doc-luz','doc-afp'].forEach(id => { document.getElementById(id).checked = false; });
   toggleCuotasFields();
 
   if (pago === 'Cuotas') {
@@ -759,8 +779,59 @@ function marcarCuotaPagada(ventaId, numeroCuota) {
   mostrarContrato(ventaId); // refresca la vista con el nuevo estado
 }
 
+// ===== QR de pago digital por cuota (como el "Pago de cuotas QR") =====
+function toggleQrCuota(ventaId, numeroCuota, monto) {
+  const fila = document.getElementById(`qr-row-${ventaId}-${numeroCuota}`);
+  if (!fila) return;
+  const estaOculto = fila.classList.contains('hidden');
+  fila.classList.toggle('hidden');
+
+  if (estaOculto) {
+    const contenedor = document.getElementById(`qr-canvas-${ventaId}-${numeroCuota}`);
+    if (contenedor && contenedor.childElementCount === 0 && typeof QRCode !== 'undefined') {
+      const dato = `MICEL-PAGO|venta:${ventaId}|cuota:${numeroCuota}|monto:${monto}`;
+      new QRCode(contenedor, { text: dato, width: 130, height: 130 });
+    }
+  }
+}
+
+// ===== Consultar estado de cuenta (deuda pendiente) =====
+function consultarEstadoCuenta() {
+  const q = document.getElementById('cel-consulta-input').value.trim().toLowerCase();
+  const box = document.getElementById('cel-consulta-resultado');
+  if (!q) { box.innerHTML = 'Escribe un nombre de cliente o IMEI para consultar.'; return; }
+
+  const venta = celularesData.find(v =>
+    v.planPagos && (
+      v.cliente.toLowerCase().includes(q) ||
+      v.imei.toLowerCase().includes(q)
+    )
+  );
+
+  if (!venta) {
+    box.innerHTML = `No se encontró ninguna venta a crédito activa para "<strong>${q}</strong>".`;
+    return;
+  }
+
+  const p = venta.planPagos;
+  const pendientes = p.cuotas.filter(c => !c.pagada);
+  const saldoPendiente = pendientes.reduce((a,c)=>a+c.monto, 0);
+  const proxima = pendientes[0];
+
+  box.innerHTML = `
+    <div style="border:1px solid var(--gray-200);border-radius:8px;padding:14px;margin-top:6px">
+      <div style="font-weight:600;color:var(--gray-800);margin-bottom:6px">${venta.cliente} — ${venta.modelo} (IMEI ${venta.imei})</div>
+      <div>Saldo pendiente: <strong style="color:var(--accent)">Bs ${fmtMonto(saldoPendiente)}</strong> de ${pendientes.length} cuota${pendientes.length!==1?'s':''}</div>
+      ${proxima ? `<div>Próxima cuota: <strong>Bs ${fmtMonto(proxima.monto)}</strong> — vence el ${proxima.fecha}</div>` : '<div style="color:var(--success)">✓ Este crédito ya está totalmente pagado.</div>'}
+      <div style="margin-top:8px"><button class="btn-sm btn-sm-primary" onclick="mostrarContrato('${venta.id}')">Ver contrato completo</button></div>
+    </div>`;
+}
+
 // ===== CONTRATO DE VENTA A CRÉDITO =====
+let contratoActualId = null; // recuerda qué venta está abierta para poder imprimirla
+
 function mostrarContrato(ventaId) {
+  contratoActualId = ventaId;
   const v = celularesData.find(x => x.id === ventaId);
   if (!v || !v.planPagos) { alert('Esta venta no tiene un plan de pagos asociado.'); return; }
   const p = v.planPagos;
@@ -773,16 +844,36 @@ function mostrarContrato(ventaId) {
       <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center">
         <span style="font-size:11px;font-weight:600;color:${c.pagada?'#0e9f6e':'#c27803'}">${c.pagada?'✓ Pagada':'Pendiente'}</span>
       </td>
-      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center">
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center;white-space:nowrap">
         <button class="btn-sm" onclick="marcarCuotaPagada('${v.id}', ${c.numero})">${c.pagada?'Desmarcar':'Marcar pagada'}</button>
+        ${c.pagada ? '' : `<button class="btn-sm btn-sm-primary" onclick="toggleQrCuota('${v.id}', ${c.numero}, ${c.monto})">QR</button>`}
       </td>
-    </tr>`).join('');
+    </tr>
+    ${c.pagada ? '' : `
+    <tr id="qr-row-${v.id}-${c.numero}" class="hidden">
+      <td colspan="5" style="padding:10px 8px;border-bottom:1px solid #f3f4f6;text-align:center;background:#f9fafb">
+        <div id="qr-box-${v.id}-${c.numero}" style="display:inline-flex;flex-direction:column;align-items:center;gap:6px">
+          <div id="qr-canvas-${v.id}-${c.numero}"></div>
+          <span style="font-size:11px;color:#6b7280">Escanea para pagar la Cuota ${c.numero} · Bs ${fmtMonto(c.monto)}</span>
+        </div>
+      </td>
+    </tr>`}`).join('');
+
+  const docs = v.documentos;
+  const docsHtml = docs ? `
+      <div style="background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Documentos presentados y verificados</div>
+        <div>${docs.ci ? '✅' : '❌'} Documento de identidad vigente</div>
+        <div>${docs.boleta ? '✅' : '❌'} Última boleta de pago</div>
+        <div>${docs.luz ? '✅' : '❌'} Aviso de luz de la vivienda actual</div>
+        <div>${docs.afp ? '✅' : '❌'} Extracto de AFP</div>
+      </div>` : '';
 
   document.getElementById('contrato-cel-preview').innerHTML = `
     <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.8;color:#1f2937;background:#ffffff">
       <div style="text-align:center;margin-bottom:16px;border-bottom:2px dashed #e5e7eb;padding-bottom:14px">
         <div style="font-size:22px;font-weight:700;color:#ff1440;letter-spacing:2px">MICEL</div>
-        <div style="font-size:11px;color:#6b7280">Contrato de venta a crédito — Equipo móvil</div>
+        <div style="font-size:11px;color:#6b7280">Contrato de venta a crédito — Plan Cuotas MiCel</div>
         <div style="font-size:11px;color:#6b7280">Sucursal: ${v.branch} · El Alto, Bolivia</div>
       </div>
 
@@ -799,6 +890,8 @@ function mostrarContrato(ventaId) {
         <div><strong>IMEI:</strong> ${v.imei}</div>
         <div><strong>Estado:</strong> ${v.estado}</div>
       </div>
+
+      ${docsHtml}
 
       <div style="display:flex;justify-content:space-between;background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
         <div><strong>Precio total:</strong><br>Bs ${fmtMonto(p.total)}</div>
@@ -834,8 +927,117 @@ function mostrarContrato(ventaId) {
   document.getElementById('modal-contrato-cel').classList.remove('hidden');
 }
 
-function imprimirContratoCelular() {
-  const contenido = document.getElementById('contrato-cel-preview').innerHTML;
+// Genera un QR como imagen (dataURL) en un contenedor invisible, y lo devuelve.
+// Usar imágenes en vez de <canvas> en vivo es lo que permite que el QR sí
+// aparezca al imprimir/exportar a PDF (un canvas vacío no se serializa).
+function generarQrDataURL(texto) {
+  return new Promise(resolve => {
+    const temp = document.createElement('div');
+    temp.style.position = 'fixed';
+    temp.style.left = '-9999px';
+    document.body.appendChild(temp);
+    new QRCode(temp, { text: texto, width: 130, height: 130 });
+    // pequeño delay para asegurar que el canvas ya se pintó
+    setTimeout(() => {
+      const canvas = temp.querySelector('canvas');
+      const imgTag = temp.querySelector('img');
+      const dataUrl = canvas ? canvas.toDataURL('image/png') : (imgTag ? imgTag.src : '');
+      document.body.removeChild(temp);
+      resolve(dataUrl);
+    }, 60);
+  });
+}
+
+async function imprimirContratoCelular() {
+  const ventaId = contratoActualId;
+  const v = celularesData.find(x => x.id === ventaId);
+  if (!v || !v.planPagos) return;
+  const p = v.planPagos;
+
+  // Genera (o regenera) el QR de cada cuota pendiente como imagen fija, lista para imprimir
+  const qrImgs = {};
+  for (const c of p.cuotas) {
+    if (c.pagada) continue;
+    const dato = `MICEL-PAGO|venta:${v.id}|cuota:${c.numero}|monto:${c.monto}`;
+    qrImgs[c.numero] = await generarQrDataURL(dato);
+  }
+
+  const filasImprimibles = p.cuotas.map(c => `
+    <tr>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">Cuota ${c.numero}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">${c.fecha}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:right">Bs ${fmtMonto(c.monto)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center">${c.pagada ? '✓ Pagada' : 'Pendiente'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center">
+        ${c.pagada ? '' : `<img src="${qrImgs[c.numero]}" width="70" height="70" alt="QR cuota ${c.numero}">`}
+      </td>
+    </tr>`).join('');
+
+  const docs = v.documentos;
+  const docsHtml = docs ? `
+      <div style="background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Documentos presentados y verificados</div>
+        <div>${docs.ci ? '✅' : '❌'} Documento de identidad vigente</div>
+        <div>${docs.boleta ? '✅' : '❌'} Última boleta de pago</div>
+        <div>${docs.luz ? '✅' : '❌'} Aviso de luz de la vivienda actual</div>
+        <div>${docs.afp ? '✅' : '❌'} Extracto de AFP</div>
+      </div>` : '';
+
+  const contenido = `
+    <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.8;color:#1f2937;background:#ffffff">
+      <div style="text-align:center;margin-bottom:16px;border-bottom:2px dashed #e5e7eb;padding-bottom:14px">
+        <div style="font-size:22px;font-weight:700;color:#ff1440;letter-spacing:2px">MICEL</div>
+        <div style="font-size:11px;color:#6b7280">Contrato de venta a crédito — Plan Cuotas MiCel</div>
+        <div style="font-size:11px;color:#6b7280">Sucursal: ${v.branch} · El Alto, Bolivia</div>
+      </div>
+
+      <p style="margin-bottom:10px">
+        Por medio del presente documento, <strong>${v.cliente}</strong>
+        (Tel./CI: ${v.telefono}) declara adquirir de <strong>MiCel</strong> el equipo detallado a
+        continuación, bajo la modalidad de <strong>venta a crédito en cuotas</strong>, comprometiéndose
+        a cancelar el saldo pendiente según el cronograma acordado.
+      </p>
+
+      <div style="background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Datos del equipo</div>
+        <div><strong>Modelo:</strong> ${v.modelo}</div>
+        <div><strong>IMEI:</strong> ${v.imei}</div>
+        <div><strong>Estado:</strong> ${v.estado}</div>
+      </div>
+
+      ${docsHtml}
+
+      <div style="display:flex;justify-content:space-between;background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:14px">
+        <div><strong>Precio total:</strong><br>Bs ${fmtMonto(p.total)}</div>
+        <div><strong>Pago inicial:</strong><br>Bs ${fmtMonto(p.inicial)}</div>
+        <div><strong>Saldo financiado:</strong><br>Bs ${fmtMonto(p.saldo)}</div>
+        <div><strong>Cuotas:</strong><br>${p.numero} (${p.frecuencia})</div>
+      </div>
+
+      <div style="font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;margin-bottom:8px">Cronograma de pagos — escanea el QR para pagar cada cuota</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
+        <thead><tr style="background:#f3f4f6">
+          <th style="padding:6px 8px;text-align:left;font-size:11px">Cuota</th>
+          <th style="padding:6px 8px;text-align:left;font-size:11px">Vencimiento</th>
+          <th style="padding:6px 8px;text-align:right;font-size:11px">Monto</th>
+          <th style="padding:6px 8px;text-align:center;font-size:11px">Estado</th>
+          <th style="padding:6px 8px;text-align:center;font-size:11px">QR de pago</th>
+        </tr></thead>
+        <tbody>${filasImprimibles}</tbody>
+      </table>
+
+      <div style="background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:12px;font-size:11.5px;color:#713f12;margin-bottom:14px">
+        <strong>Cláusulas:</strong> El incumplimiento de 2 o más cuotas consecutivas faculta a MiCel a
+        exigir el pago total del saldo pendiente y/o suspender la garantía del equipo. El cliente
+        declara haber recibido el equipo en el estado descrito, conforme y en funcionamiento.
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:30px;font-size:12px">
+        <div style="text-align:center;width:45%;border-top:1px solid #9ca3af;padding-top:6px">Firma del Cliente</div>
+        <div style="text-align:center;width:45%;border-top:1px solid #9ca3af;padding-top:6px">Firma MiCel</div>
+      </div>
+    </div>`;
+
   const w = window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Contrato MiCel</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">

@@ -779,7 +779,7 @@ function mostrarContrato(ventaId) {
     </tr>`).join('');
 
   document.getElementById('contrato-cel-preview').innerHTML = `
-    <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.8">
+    <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.8;color:#1f2937;background:#ffffff">
       <div style="text-align:center;margin-bottom:16px;border-bottom:2px dashed #e5e7eb;padding-bottom:14px">
         <div style="font-size:22px;font-weight:700;color:#ff1440;letter-spacing:2px">MICEL</div>
         <div style="font-size:11px;color:#6b7280">Contrato de venta a crédito — Equipo móvil</div>
@@ -1045,7 +1045,7 @@ function renderRecibosHistorial() {
 function mostrarVistaPrevia(recibo) {
   const tech = getTech(recibo.techCode);
   document.getElementById('recibo-preview').innerHTML = `
-    <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.9">
+    <div style="border:2px solid #e5e7eb;border-radius:8px;padding:24px;font-size:13px;line-height:1.9;color:#1f2937;background:#ffffff">
       <div style="text-align:center;margin-bottom:18px;border-bottom:2px dashed #e5e7eb;padding-bottom:16px">
         <div style="font-size:24px;font-weight:700;color:#ff1440;letter-spacing:2px">MICEL</div>
         <div style="font-size:11px;color:#6b7280">Servicio técnico especializado en dispositivos móviles</div>

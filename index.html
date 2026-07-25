@@ -212,6 +212,18 @@
       <!-- STOCK -->
       <div class="panel" id="panel-stock">
         <div class="card">
+          <div class="card-header"><h3 class="card-title">Agregar nuevo repuesto</h3></div>
+          <div class="form-grid">
+            <div class="form-group"><label>Nombre *</label><input type="text" id="new-rep-name" placeholder="Ej: Pantalla Samsung A32"></div>
+            <div class="form-group"><label>Categoría *</label><input type="text" id="new-rep-cat" placeholder="Ej: Pantallas"></div>
+            <div class="form-group"><label>Cantidad inicial</label><input type="number" id="new-rep-qty" placeholder="0" min="0"></div>
+            <div class="form-group"><label>Stock mínimo</label><input type="number" id="new-rep-min" placeholder="1" min="1"></div>
+            <div class="form-group"><label>Precio (Bs)</label><input type="number" id="new-rep-precio" placeholder="0.00" min="0"></div>
+          </div>
+          <div style="padding:0 18px 16px"><button class="btn-primary" onclick="guardarRepuesto()">+ Agregar repuesto</button></div>
+        </div>
+
+        <div class="card">
           <div class="card-header">
             <h3 class="card-title">Inventario de repuestos</h3>
             <input class="input-search" placeholder="Buscar repuesto o categoría..." oninput="filterStock(this.value)">
@@ -614,79 +626,6 @@
   </div>
 </div>
 
-<!-- MODAL: NUEVO REPUESTO -->
-<div class="modal-overlay hidden" id="modal-repuesto">
-  <div class="modal-box" style="width:440px">
-    <div class="modal-header"><h3>Agregar repuesto al inventario</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="form-grid">
-      <div class="form-group" style="grid-column:span 2"><label>Nombre del repuesto *</label><input type="text" id="new-rep-name" placeholder="Ej: Pantalla Samsung A53"></div>
-      <div class="form-group"><label>Categoría *</label>
-        <select id="new-rep-cat">
-          <option>Pantallas</option><option>Baterías</option><option>Conectores</option>
-          <option>Retroiluminación</option><option>Flex</option><option>Audio</option><option>Accesorios</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Precio unitario (Bs)</label><input type="number" id="new-rep-precio" placeholder="0.00"></div>
-      <div class="form-group"><label>Cantidad inicial</label><input type="number" id="new-rep-qty" placeholder="0" value="0"></div>
-      <div class="form-group"><label>Stock mínimo</label><input type="number" id="new-rep-min" placeholder="5" value="5"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="guardarRepuesto()">Agregar repuesto</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: EDITAR REPUESTO -->
-<div class="modal-overlay hidden" id="modal-editar-repuesto">
-  <div class="modal-box" style="width:440px">
-    <div class="modal-header"><h3>Editar repuesto</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <input type="hidden" id="edit-rep-id">
-    <div class="form-grid">
-      <div class="form-group" style="grid-column:span 2"><label>Nombre</label><input type="text" id="edit-rep-name"></div>
-      <div class="form-group"><label>Categoría</label><input type="text" id="edit-rep-cat"></div>
-      <div class="form-group"><label>Precio unitario (Bs)</label><input type="number" id="edit-rep-precio"></div>
-      <div class="form-group"><label>Stock actual</label><input type="number" id="edit-rep-qty"></div>
-      <div class="form-group"><label>Stock mínimo</label><input type="number" id="edit-rep-min"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="guardarEdicionRepuesto()">Guardar cambios</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: AJUSTE DE STOCK RÁPIDO -->
-<div class="modal-overlay hidden" id="modal-ajuste-stock">
-  <div class="modal-box" style="width:420px">
-    <div class="modal-header"><h3>Ajuste rápido de stock</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <input type="hidden" id="adj-id">
-    <div style="padding:16px 20px">
-      <div style="font-size:14px;font-weight:600;color:var(--gray-800);margin-bottom:4px" id="adj-name"></div>
-      <div style="font-size:12px;color:var(--gray-400);margin-bottom:16px">Modifica el stock de este repuesto individualmente</div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr">
-        <div class="form-group"><label>Stock mínimo</label><input type="number" id="adj-min"></div>
-        <div class="form-group"><label>Precio unitario (Bs)</label><input type="number" id="adj-precio"></div>
-        <div class="form-group"><label>Stock actual</label><input type="number" id="adj-qty" style="font-weight:600" readonly></div>
-        <div class="form-group"><label>Operación</label>
-          <select id="adj-operacion">
-            <option value="add">Sumar (+)</option>
-            <option value="sub">Restar (−)</option>
-            <option value="set">Establecer (=)</option>
-          </select>
-        </div>
-        <div class="form-group" style="grid-column:span 2"><label>Cantidad</label>
-          <input type="number" id="adj-cantidad" placeholder="Ingrese cantidad" min="0">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="guardarAjusteStock()">Aplicar ajuste</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: NUEVO CLIENTE -->
 <div class="modal-overlay hidden" id="modal-cliente">
   <div class="modal-box" style="width:420px">
@@ -817,45 +756,6 @@
 </div>
 
 <!-- MODAL STOCK DETALLE -->
-<div class="modal-overlay hidden" id="modal-stock-detail">
-  <div class="stock-modal-box">
-    <div class="modal-header">
-      <h3>Control de Stock — Inventario</h3>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input class="input-search" id="stock-modal-search" placeholder="Buscar..." oninput="filterStockModal(this.value)" style="width:180px">
-        <button class="btn-primary" onclick="openModal('repuesto')">+ Agregar</button>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-    </div>
-    <div class="stock-modal-body">
-      <div class="stock-sidebar" id="stock-modal-sidebar"></div>
-      <div class="stock-main-area">
-        <div class="stock-main-toolbar">
-          <span style="font-size:12px;color:var(--gray-500)" id="stock-modal-count">0 repuestos</span>
-          <div style="display:flex;gap:6px;margin-left:auto">
-              <select class="select-branch" id="stock-modal-filter" onchange="filterStockModalStatus(this.value)">
-                <option value="all">Todos los estados</option>
-                <option value="low" selected>⚠️ Crítico y sin stock</option>
-                <option value="zero">🔴 Sin stock</option>
-              </select>
-          </div>
-        </div>
-        <div class="stock-grid" id="stock-modal-grid"></div>
-        <div class="stock-detail-panel" id="stock-detail-panel">
-          <div class="stock-detail-stat"><div class="val" id="sdp-qty">—</div><div class="lbl">Stock actual</div></div>
-          <div class="stock-detail-stat"><div class="val" id="sdp-min">—</div><div class="lbl">Mínimo</div></div>
-          <div class="stock-detail-stat"><div class="val" id="sdp-precio">—</div><div class="lbl">Precio (Bs)</div></div>
-          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-            <span id="sdp-name" style="font-size:13px;font-weight:600;color:var(--gray-800)"></span>
-            <button class="btn-secondary" onclick="editarRepuesto(stockDetailId)">Editar</button>
-            <button class="btn-primary" onclick="ajustarStock(stockDetailId)">Ajustar stock</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL PERFIL -->
 <div class="modal-overlay hidden" id="modal-perfil">
   <div class="profile-modal-box">
@@ -1061,5 +961,19 @@
   <script src="js/app.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="js/extensions.js"></script>
+<!-- NOTIFICACIÓN: ALERTA DE STOCK CRÍTICO / SIN STOCK -->
+<div id="stock-toast" class="hidden" style="position:fixed;bottom:20px;right:20px;z-index:300;max-width:320px">
+  <div style="background:var(--surface);border:1px solid var(--gray-200);border-left:3px solid var(--danger);border-radius:var(--radius-lg);padding:14px 16px;box-shadow:0 12px 32px rgba(0,0,0,0.5)">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <span style="font-size:18px;line-height:1">⚠️</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:4px">Alerta de inventario</div>
+        <div id="stock-toast-msg" style="font-size:12px;color:var(--gray-600);line-height:1.5"></div>
+      </div>
+      <button onclick="cerrarToastStock()" style="background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:14px;padding:0">✕</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

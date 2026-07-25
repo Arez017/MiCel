@@ -107,7 +107,7 @@ function nav(id, el) {
 
 function topAction(id) {
   if (id === 'dashboard' || id === 'ordenes') openModal('orden');
-  else if (id === 'stock')   openModal('repuesto');
+  else if (id === 'stock')   document.getElementById('new-rep-name')?.focus();
   else if (id === 'ventas')  openModal('venta');
   else if (id === 'celulares') document.getElementById('cel-modelo')?.focus();
   else if (id === 'clientes')openModal('cliente');
@@ -299,9 +299,14 @@ function guardarOrden() {
   nav('ordenes', document.querySelectorAll('.nav-item')[1]);
 }
 
-// ===== STOCK =====
+// ===== STOCK (edición 100% inline, sin ventanas emergentes) =====
+let stockEditingId = null; // guarda qué fila está en modo edición ahora mismo
+
 function renderStock(data) {
-  document.getElementById('stock-body').innerHTML = data.map(s=>{
+  revisarAlertasStock();
+  document.getElementById('stock-body').innerHTML = data.map(s => {
+    if (s.id === stockEditingId) return filaStockEdicion(s);
+
     const pct   = Math.min(100, Math.round((s.qty/Math.max(s.min*2,1))*100));
     const color = stockColor(s.qty, s.min);
     return `
@@ -320,13 +325,44 @@ function renderStock(data) {
         </td>
         <td>${stockBadge(s.qty, s.min)}</td>
         <td>
-          <div style="display:flex;gap:4px">
-            <button class="btn-sm" onclick="editarRepuesto('${s.id}')">Editar</button>
-            <button class="btn-sm btn-sm-primary" onclick="ajustarStock('${s.id}')">${s.qty===0?'Reabastecer':'Stock'}</button>
-          </div>
+          <button class="btn-sm btn-sm-primary" onclick="editarRepuesto('${s.id}')">${s.qty===0?'Reabastecer / Editar':'Editar'}</button>
         </td>
       </tr>`;
   }).join('');
+}
+
+// Fila en modo edición: todos los campos se editan directo ahí, sin popup
+function filaStockEdicion(s) {
+  return `
+    <tr style="background:var(--surface-alt)">
+      <td><code class="code-tag" style="font-size:10px">${s.id}</code></td>
+      <td><input type="text" id="stock-edit-name-${s.id}" value="${s.name}" style="width:100%;padding:5px 7px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
+      <td><input type="text" id="stock-edit-cat-${s.id}" value="${s.cat}" style="width:100%;padding:5px 7px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="btn-sm" style="padding:2px 8px" onclick="pasoStockQty('${s.id}',-1)">−</button>
+          <input type="number" id="stock-edit-qty-${s.id}" value="${s.qty}" min="0" style="width:56px;padding:5px 4px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px;text-align:center">
+          <button class="btn-sm" style="padding:2px 8px" onclick="pasoStockQty('${s.id}',1)">+</button>
+        </div>
+      </td>
+      <td><input type="number" id="stock-edit-min-${s.id}" value="${s.min}" min="1" style="width:56px;padding:5px 4px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
+      <td><input type="number" id="stock-edit-precio-${s.id}" value="${s.precio}" min="0" style="width:72px;padding:5px 4px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
+      <td colspan="2" style="color:var(--gray-400);font-size:11px">Editando ahora...</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn-sm btn-sm-primary" onclick="guardarEdicionRepuesto('${s.id}')">Guardar</button>
+          <button class="btn-sm" onclick="cancelarEdicionStock()">Cancelar</button>
+        </div>
+      </td>
+    </tr>`;
+}
+
+// Botones +/- rápidos dentro de la propia fila en edición (sin salir de la tabla)
+function pasoStockQty(id, delta) {
+  const input = document.getElementById(`stock-edit-qty-${id}`);
+  if (!input) return;
+  const nuevo = Math.max(0, (parseInt(input.value)||0) + delta);
+  input.value = nuevo;
 }
 
 function filterStock(q) {
@@ -337,149 +373,80 @@ function filterStock(q) {
   ));
 }
 
-function ajustarStock(id) {
-  const s = stockData.find(x=>x.id===id);
-  if (!s) return;
-  document.getElementById('adj-id').value    = id;
-  document.getElementById('adj-name').value  = s.name;
-  document.getElementById('adj-qty').value   = s.qty;
-  document.getElementById('adj-min').value   = s.min;
-  document.getElementById('adj-precio').value= s.precio;
-  openModal('ajuste-stock');
-}
-
-function guardarAjusteStock() {
-  const id  = document.getElementById('adj-id').value;
-  const idx = stockData.findIndex(x=>x.id===id);
-  if (idx<0) return;
-  const s   = stockData[idx];
-
-  const op  = document.getElementById('adj-operacion').value;
-  const val = parseInt(document.getElementById('adj-cantidad').value);
-  const minVal    = parseInt(document.getElementById('adj-min').value);
-  const precioVal = parseFloat(document.getElementById('adj-precio').value);
-
-  // ===== Validaciones de cantidad =====
-  if (isNaN(val) || val < 0) {
-    alert('La cantidad debe ser un número positivo.');
-    return;
-  }
-
-  let nuevaQty = s.qty;
-
-  if (op === 'sub') {
-    if (s.qty === 0) {
-      alert(`"${s.name}" ya está SIN STOCK (0 unidades). Debes reabastecer antes de restar.`);
-      return;
-    }
-    if (val > s.qty) {
-      alert(`No puedes restar ${val} unidades: solo hay ${s.qty} disponibles de "${s.name}".`);
-      return;
-    }
-    nuevaQty = s.qty - val;
-  } else if (op === 'add') {
-    nuevaQty = s.qty + val;
-  } else if (op === 'set') {
-    nuevaQty = val;
-  }
-
-  // Confirmación antes de dejar el producto en 0
-  if (nuevaQty === 0 && s.qty !== 0) {
-    const continuar = confirm(`Este ajuste dejará "${s.name}" SIN STOCK (0 unidades).\n¿Deseas continuar?`);
-    if (!continuar) return;
-  }
-
-  // ===== Validaciones de mínimo y precio =====
-  if (isNaN(minVal) || minVal < 1) {
-    alert('El stock mínimo debe ser al menos 1 unidad.');
-    return;
-  }
-  if (isNaN(precioVal) || precioVal < 0) {
-    alert('El precio no puede ser negativo.');
-    return;
-  }
-
-  stockData[idx].qty    = nuevaQty;
-  stockData[idx].min    = minVal;
-  stockData[idx].precio = precioVal;
-  closeModal();
-  renderStock(stockData);
-
-  // Aviso adicional si quedó en estado crítico (pero no en 0)
-  if (nuevaQty > 0 && nuevaQty < minVal) {
-    alert(`⚠️ "${s.name}" quedó en nivel CRÍTICO (${nuevaQty} de ${minVal} unidades mínimas). Considera reabastecer pronto.`);
-  }
-}
-
 function editarRepuesto(id) {
-  const s = stockData.find(x=>x.id===id);
-  if (!s) return;
-  document.getElementById('edit-rep-id').value     = id;
-  document.getElementById('edit-rep-name').value   = s.name;
-  document.getElementById('edit-rep-cat').value    = s.cat;
-  document.getElementById('edit-rep-qty').value    = s.qty;
-  document.getElementById('edit-rep-min').value    = s.min;
-  document.getElementById('edit-rep-precio').value = s.precio;
-  openModal('editar-repuesto');
+  stockEditingId = id;
+  renderStock(stockData);
 }
 
-function guardarEdicionRepuesto() {
-  const id  = document.getElementById('edit-rep-id').value;
+function cancelarEdicionStock() {
+  stockEditingId = null;
+  renderStock(stockData);
+}
+
+function guardarEdicionRepuesto(id) {
   const idx = stockData.findIndex(x=>x.id===id);
   if (idx<0) return;
+  const s = stockData[idx];
 
-  const qty    = parseInt(document.getElementById('edit-rep-qty').value);
-  const min    = parseInt(document.getElementById('edit-rep-min').value);
-  const precio = parseFloat(document.getElementById('edit-rep-precio').value);
+  const nuevoNombre = document.getElementById(`stock-edit-name-${id}`).value.trim();
+  const nuevaCat    = document.getElementById(`stock-edit-cat-${id}`).value.trim();
+  const qty    = parseInt(document.getElementById(`stock-edit-qty-${id}`).value);
+  const min    = parseInt(document.getElementById(`stock-edit-min-${id}`).value);
+  const precio = parseFloat(document.getElementById(`stock-edit-precio-${id}`).value);
 
+  if (!nuevoNombre || !nuevaCat) { alert('Complete nombre y categoría.'); return; }
   if (isNaN(qty) || qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
   if (isNaN(min) || min < 1) { alert('El stock mínimo debe ser al menos 1 unidad.'); return; }
   if (isNaN(precio) || precio < 0) { alert('El precio no puede ser negativo.'); return; }
 
-  const nuevoNombre = document.getElementById('edit-rep-name').value.trim();
-  const nuevaCat    = document.getElementById('edit-rep-cat').value.trim();
-  const yaExiste = stockData.some(s =>
-    s.id !== id &&
-    s.name.trim().toLowerCase() === nuevoNombre.toLowerCase() &&
-    s.cat.trim().toLowerCase()  === nuevaCat.toLowerCase()
+  const yaExiste = stockData.some(x =>
+    x.id !== id &&
+    x.name.trim().toLowerCase() === nuevoNombre.toLowerCase() &&
+    x.cat.trim().toLowerCase()  === nuevaCat.toLowerCase()
   );
   if (yaExiste) {
-    alert(`Ya existe otro repuesto llamado "${nuevoNombre}" en la categoría "${nuevaCat}". Usa un nombre distinto o edita ese repuesto directamente.`);
+    alert(`Ya existe otro repuesto llamado "${nuevoNombre}" en la categoría "${nuevaCat}". Usa un nombre distinto.`);
     return;
   }
 
-  if (qty === 0 && stockData[idx].qty !== 0) {
-    const continuar = confirm(`Este cambio dejará "${stockData[idx].name}" SIN STOCK (0 unidades).\n¿Deseas continuar?`);
+  if (qty === 0 && s.qty !== 0) {
+    const continuar = confirm(`Este cambio dejará "${s.name}" SIN STOCK (0 unidades).\n¿Deseas continuar?`);
     if (!continuar) return;
   }
 
-  stockData[idx].name   = nuevoNombre;
-  stockData[idx].cat    = nuevaCat;
-  stockData[idx].qty    = qty;
-  stockData[idx].min    = min;
-  stockData[idx].precio = precio;
-  closeModal();
+  s.name   = nuevoNombre;
+  s.cat    = nuevaCat;
+  s.qty    = qty;
+  s.min    = min;
+  s.precio = precio;
+
+  stockEditingId = null;
   renderStock(stockData);
+
+  if (qty > 0 && qty < min) {
+    alert(`⚠️ "${s.name}" quedó en nivel CRÍTICO (${qty} de ${min} unidades mínimas). Considera reabastecer pronto.`);
+  }
 }
 
+// Alta de repuesto nuevo — formulario siempre visible arriba de la tabla (sin popup)
 function guardarRepuesto() {
   const name   = document.getElementById('new-rep-name').value.trim();
   const cat    = document.getElementById('new-rep-cat').value.trim();
-  const qty    = parseInt(document.getElementById('new-rep-qty').value);
-  const min    = parseInt(document.getElementById('new-rep-min').value);
-  const precio = parseFloat(document.getElementById('new-rep-precio').value);
+  const qty    = parseInt(document.getElementById('new-rep-qty').value) || 0;
+  const min    = parseInt(document.getElementById('new-rep-min').value) || 1;
+  const precio = parseFloat(document.getElementById('new-rep-precio').value) || 0;
 
   if (!name||!cat) { alert('Complete nombre y categoría.'); return; }
-  if (isNaN(qty) || qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
-  if (isNaN(min) || min < 1) { alert('El stock mínimo debe ser al menos 1 unidad.'); return; }
-  if (isNaN(precio) || precio < 0) { alert('El precio no puede ser negativo.'); return; }
+  if (qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
+  if (min < 1) { alert('El stock mínimo debe ser al menos 1 unidad.'); return; }
+  if (precio < 0) { alert('El precio no puede ser negativo.'); return; }
 
   const yaExiste = stockData.some(s =>
     s.name.trim().toLowerCase() === name.toLowerCase() &&
     s.cat.trim().toLowerCase()  === cat.toLowerCase()
   );
   if (yaExiste) {
-    alert(`Ya existe un repuesto llamado "${name}" en la categoría "${cat}".\nSi quieres sumar unidades, usa el botón "Stock" de ese repuesto en vez de crear uno nuevo.`);
+    alert(`Ya existe un repuesto llamado "${name}" en la categoría "${cat}".\nSi quieres sumar unidades, edítalo directo desde la tabla en vez de crear uno nuevo.`);
     return;
   }
 
@@ -491,8 +458,52 @@ function guardarRepuesto() {
   const id = `REP-${String(repCounter).padStart(3,'0')}`;
   repCounter++;
   stockData.push({ id, name, cat, qty, min, precio });
-  closeModal();
   renderStock(stockData);
+
+  ['new-rep-name','new-rep-cat','new-rep-qty','new-rep-min','new-rep-precio'].forEach(fid => {
+    document.getElementById(fid).value = '';
+  });
+}
+
+// ===== NOTIFICACIÓN DE STOCK CRÍTICO / SIN STOCK =====
+let toastStockCerrado = false;
+let toastStockUltimoMensaje = '';
+
+function revisarAlertasStock() {
+  const sinStock = stockData.filter(s => s.qty === 0);
+  const criticos = stockData.filter(s => s.qty > 0 && s.qty < s.min);
+
+  const toast = document.getElementById('stock-toast');
+  if (!toast) return; // por si se llama antes de que el DOM esté listo
+
+  if (sinStock.length === 0 && criticos.length === 0) {
+    toast.classList.add('hidden');
+    return;
+  }
+
+  const partes = [];
+  if (sinStock.length) {
+    partes.push(`🔴 <strong>${sinStock.length}</strong> sin stock: ${sinStock.map(s=>s.name).slice(0,3).join(', ')}${sinStock.length>3?'…':''}`);
+  }
+  if (criticos.length) {
+    partes.push(`🟡 <strong>${criticos.length}</strong> en nivel crítico: ${criticos.map(s=>s.name).slice(0,3).join(', ')}${criticos.length>3?'…':''}`);
+  }
+  const mensaje = partes.join('<br>');
+
+  // Si el contenido de la alerta cambió (ej. un nuevo producto se quedó sin stock),
+  // la vuelve a mostrar aunque el usuario haya cerrado la anterior.
+  if (mensaje !== toastStockUltimoMensaje) {
+    toastStockCerrado = false;
+    toastStockUltimoMensaje = mensaje;
+  }
+
+  document.getElementById('stock-toast-msg').innerHTML = mensaje;
+  toast.classList.toggle('hidden', toastStockCerrado);
+}
+
+function cerrarToastStock() {
+  toastStockCerrado = true;
+  document.getElementById('stock-toast').classList.add('hidden');
 }
 
 // ===== VENTAS =====
@@ -1324,9 +1335,6 @@ function openModal(tipo) {
   const map = {
     'orden':          'modal',
     'editar-orden':   'modal-editar-orden',
-    'repuesto':       'modal-repuesto',
-    'editar-repuesto':'modal-editar-repuesto',
-    'ajuste-stock':   'modal-ajuste-stock',
     'venta':          'modal-venta',
     'cliente':        'modal-cliente',
     'recibo-manual':  'modal-recibo',

@@ -30,6 +30,13 @@ function doLogin() {
     return;
   }
 
+  // Validación de usuario inactivo
+  const techInfo = tecnicos.find(t => t.user === found.user);
+  if (techInfo && techInfo.active === false) {
+    alert('Este usuario está inactivo. Contacte al administrador.');
+    return;
+  }
+
   document.getElementById('login-error').style.display = 'none';
   currentUser = found;
   document.getElementById('login-screen').classList.add('hidden');
@@ -284,7 +291,10 @@ function guardarOrden() {
   const branch  = document.getElementById('modal-branch').value;
   const techCode= document.getElementById('modal-tech').value;
   if (!client||!device||!service) { alert('Complete: Cliente, Equipo y Servicio.'); return; }
-  const code = `#OS-00${orderCounter++}`;
+  
+  // Código de orden corregido (padding correcto)
+  const code = `#OS-${String(orderCounter++).padStart(4, '0')}`;
+  
   const assignedTech = currentUser && currentUser.rol === 'Técnico' ? currentUser.techCode : techCode;
   ordersData.unshift({ code, client, phone, device, service, techCode: assignedTech, branch, status:'Recepción', date:nowDate(), monto, obs });
   if (!clientesData.find(c=>c.phone===phone&&c.name===client)) {

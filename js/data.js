@@ -44,7 +44,7 @@ let stockData = [
 ];
 
 let clientesData = [
-  { id: 'CLI-001', name: 'Arez Dragneel',   phone: '72345678', branch: 'KevSolution',       visits: 4, lastVisit: '25/04/2026' },
+  { id: 'CLI-001', name: 'Arez Dragneel',   phone: '72345678', branch: 'KevSolutions',      visits: 4, lastVisit: '25/04/2026' },
   { id: 'CLI-002', name: 'María Condori',   phone: '71234567', branch: 'Upea',              visits: 2, lastVisit: '24/04/2026' },
   { id: 'CLI-003', name: 'Carlos Mamani',   phone: '70987654', branch: 'KevSolutions',      visits: 6, lastVisit: '23/04/2026' },
   { id: 'CLI-004', name: 'Ana Flores',      phone: '69876543', branch: 'Upea',              visits: 1, lastVisit: '22/04/2026' },

@@ -1,6 +1,5 @@
 /// ==========================================
-/// Datos simulados (mock) — reemplázalos por tu
-/// backend/API real cuando lo tengas listo.
+/// Datos simulados (mock) — App solo para CLIENTES
 /// ==========================================
 
 enum UserRole { admin, tecnico, cliente }
@@ -21,28 +20,20 @@ class AppUser {
   });
 }
 
-/// Mismos usuarios que la tabla de tu login web (micel/kevsolutions = Admin,
-/// tec03..tec10 = Técnico), más el cliente VIP de la app.
+/// Solo usuarios con rol CLIENTE
 const List<AppUser> mockUsers = [
-  AppUser(username: 'micel', password: '1234', nombre: 'Administrador MiCel', role: UserRole.admin),
-  AppUser(username: 'kevsolutions', password: '1234', nombre: 'Kevin Solutions', role: UserRole.admin),
-  AppUser(username: 'tec03', password: '1234', nombre: 'Carlos Mamani', role: UserRole.tecnico),
-  AppUser(username: 'tec04', password: '1234', nombre: 'Luis Choque', role: UserRole.tecnico),
-  AppUser(username: 'tec05', password: '1234', nombre: 'Marco Apaza', role: UserRole.tecnico),
-  AppUser(username: 'tec06', password: '1234', nombre: 'Ronald Flores', role: UserRole.tecnico),
-  AppUser(username: 'tec07', password: '1234', nombre: 'David Quenta', role: UserRole.tecnico),
-  AppUser(username: 'tec08', password: '1234', nombre: 'Freddy Callisaya', role: UserRole.tecnico),
-  AppUser(username: 'tec09', password: '1234', nombre: 'Jhonny Ramos', role: UserRole.tecnico),
-  AppUser(username: 'tec10', password: '1234', nombre: 'Rolando Vargas', role: UserRole.tecnico, activo: false),
-  AppUser(username: 'jquispe', password: '1234', nombre: 'Juan Quispe', role: UserRole.cliente),
+  AppUser(username: 'jquispe',  password: '1234', nombre: 'Juan Quispe',   role: UserRole.cliente),
+  AppUser(username: 'mcondori', password: '1234', nombre: 'María Condori', role: UserRole.cliente),
+  AppUser(username: 'cmamani',  password: '1234', nombre: 'Carlos Mamani', role: UserRole.cliente),
+  AppUser(username: 'aflores',  password: '1234', nombre: 'Ana Flores',    role: UserRole.cliente),
 ];
 
-/// Sesión simple en memoria — al reiniciar la app se pierde (normal para un mock).
+/// Sesión simple en memoria
 class Session {
   static AppUser? currentUser;
 }
 
-/// ===== STOCK (visto por Admin) =====
+/// ===== STOCK (referencia, no se usa en la app de clientes) =====
 class StockItem {
   final String id;
   final String nombre;
@@ -71,14 +62,14 @@ const List<StockItem> mockStock = [
   StockItem(id: 'CON-031', nombre: 'Conector de carga tipo C', cantidad: 5, minimo: 10, categoria: 'Repuestos'),
 ];
 
-/// ===== ÓRDENES DE SERVICIO (vistas por Técnico y Admin) =====
+/// ===== ÓRDENES DE SERVICIO =====
 class ServiceOrder {
   final String codigo;
   final String cliente;
   final String equipo;
   final String servicio;
-  final String tecnico; // nombre del técnico asignado
-  final String estado; // Recibido, Diagnóstico, Reparando, Listo
+  final String tecnico;
+  final String estado;
   final double precio;
   final bool pagado;
 
@@ -93,7 +84,6 @@ class ServiceOrder {
     this.pagado = false,
   });
 
-  /// Comisión estándar del técnico: 15% del valor del servicio, solo si ya está "Listo".
   double get comisionTecnico => estado == 'Listo' ? precio * 0.15 : 0;
 }
 
@@ -106,7 +96,6 @@ const List<ServiceOrder> mockOrders = [
   ServiceOrder(codigo: 'ORD-2292', cliente: 'Rosa Callisaya', equipo: 'iPhone 12', servicio: 'Cambio de pantalla', tecnico: 'Marco Apaza', estado: 'Listo', precio: 340, pagado: true),
 ];
 
-/// Comisión total de un técnico (suma de todas sus órdenes marcadas "Listo").
 double comisionTotalTecnico(String nombreTecnico) {
   return mockOrders
       .where((o) => o.tecnico == nombreTecnico && o.estado == 'Listo')

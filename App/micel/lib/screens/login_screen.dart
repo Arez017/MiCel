@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import 'mock_data.dart';
 import 'client_shell.dart';
-import 'admin_shell.dart';
-import 'tecnico_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +27,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final found = match.first;
+
+    // Solo se permite acceso a clientes
+    if (found.role != UserRole.cliente) {
+      setState(() => _error = 'Esta aplicación es solo para clientes.\nAdmin y Técnicos deben usar el sistema web.');
+      return;
+    }
+
     if (!found.activo) {
       setState(() => _error = 'Este usuario está inactivo. Contacta a un administrador.');
       return;
@@ -36,20 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Session.currentUser = found;
 
-    Widget destino;
-    switch (found.role) {
-      case UserRole.admin:
-        destino = const AdminShell();
-        break;
-      case UserRole.tecnico:
-        destino = const TecnicoShell();
-        break;
-      case UserRole.cliente:
-        destino = const ClientShell();
-        break;
-    }
-
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => destino));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const ClientShell()),
+    );
   }
 
   @override
@@ -97,12 +91,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 14),
                   const Text('MiCel', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.gray900)),
                   const SizedBox(height: 4),
-                  const Text('Sistema de Gestión Integral v1.0',
+                  const Text('App para Clientes',
                       style: TextStyle(fontSize: 13, color: AppColors.gray500)),
                   const SizedBox(height: 26),
                   TextField(
                     controller: _userCtrl,
-                    decoration: const InputDecoration(labelText: 'Usuario', hintText: 'ej: tec03'),
+                    decoration: const InputDecoration(labelText: 'Usuario', hintText: 'ej: jquispe'),
                   ),
                   const SizedBox(height: 14),
                   TextField(
@@ -129,13 +123,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _doLogin,
-                      child: const Text('Ingresar al sistema'),
+                      child: const Text('Ingresar'),
                     ),
                   ),
                   const SizedBox(height: 18),
                   ExpansionTile(
                     tilePadding: EdgeInsets.zero,
-                    title: const Text('Ver usuarios de prueba',
+                    title: const Text('Ver usuarios de prueba (solo clientes)',
                         style: TextStyle(fontSize: 12, color: AppColors.gray400)),
                     childrenPadding: EdgeInsets.zero,
                     iconColor: AppColors.gray400,
@@ -148,16 +142,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: Column(
                           children: mockUsers.map((u) {
-                            final roleColor = switch (u.role) {
-                              UserRole.admin => AppColors.accent,
-                              UserRole.tecnico => AppColors.warning,
-                              UserRole.cliente => AppColors.success,
-                            };
-                            final roleLabel = switch (u.role) {
-                              UserRole.admin => 'Admin',
-                              UserRole.tecnico => 'Técnico',
-                              UserRole.cliente => 'Cliente',
-                            };
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               child: Row(
@@ -175,8 +159,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Expanded(
                                     flex: 2,
                                     child: Text(
-                                      u.activo ? roleLabel : '$roleLabel (inactivo)',
-                                      style: TextStyle(fontSize: 11, color: roleColor, fontWeight: FontWeight.w600),
+                                      u.activo ? 'Cliente' : 'Cliente (inactivo)',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: u.activo ? AppColors.success : AppColors.danger,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ],

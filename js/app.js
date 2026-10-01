@@ -139,6 +139,9 @@ function fmtMonto(v)     { return parseFloat(v||0).toLocaleString('es-BO', {mini
 function nowTime()       { return new Date().toLocaleTimeString('es-BO', {hour:'2-digit',minute:'2-digit'}); }
 function nowDate()       { return new Date().toLocaleDateString('es-BO'); }
 
+// Valida que un nombre NO contenga dígitos numéricos (0-9)
+function soloLetras(valor) { return !/\d/.test(valor); }
+
 function statusBadge(s) {
   const m = {'Listo':'badge-green','En proceso':'badge-blue','Diagnóstico':'badge-amber','Recepción':'badge-red'};
   return `<span class="badge ${m[s]||'badge-blue'}">${s}</span>`;
@@ -266,7 +269,9 @@ function guardarEdicionOrden() {
   const code = document.getElementById('edit-order-code').value;
   const idx  = ordersData.findIndex(x=>x.code===code);
   if (idx<0) return;
-  ordersData[idx].client  = document.getElementById('edit-order-client').value.trim();
+  const clientEdit = document.getElementById('edit-order-client').value.trim();
+  if (!soloLetras(clientEdit)) { alert('⚠️ El nombre del cliente no puede contener números.\nUse solo letras y espacios.'); return; }
+  ordersData[idx].client  = clientEdit;
   ordersData[idx].phone   = document.getElementById('edit-order-phone').value.trim();
   ordersData[idx].device  = document.getElementById('edit-order-device').value.trim();
   ordersData[idx].service = document.getElementById('edit-order-service').value.trim();
@@ -291,6 +296,7 @@ function guardarOrden() {
   const branch  = document.getElementById('modal-branch').value;
   const techCode= document.getElementById('modal-tech').value;
   if (!client||!device||!service) { alert('Complete: Cliente, Equipo y Servicio.'); return; }
+  if (!soloLetras(client)) { alert('⚠️ El nombre del cliente no puede contener números.\nUse solo letras y espacios.'); return; }
   
   // Código de orden corregido (padding correcto)
   const code = `#OS-${String(orderCounter++).padStart(4, '0')}`;
@@ -686,6 +692,7 @@ function registrarVentaCelular() {
   if (!equipo) { alert('El equipo seleccionado ya no existe en el inventario.'); return; }
   if (equipo.vendido) { alert('Este equipo ya fue vendido anteriormente.'); return; }
   if (!cliente) { alert('El nombre del cliente es obligatorio.'); return; }
+  if (!soloLetras(cliente)) { alert('⚠️ El nombre del cliente no puede contener números.\nUse solo letras y espacios.'); return; }
   if (isNaN(venta) || venta <= 0) { alert('El precio de venta debe ser mayor a 0.'); return; }
 
   if (venta < equipo.compra) {
@@ -1137,6 +1144,7 @@ function guardarCliente() {
   const phone = document.getElementById('new-cli-phone').value.trim();
   const branch= document.getElementById('new-cli-branch').value;
   if (!name||!phone) { alert('Complete nombre y teléfono.'); return; }
+  if (!soloLetras(name)) { alert('⚠️ El nombre del cliente no puede contener números.\nUse solo letras y espacios.'); return; }
   const id = `CLI-${String(cliCounter).padStart(3,'0')}`;
   cliCounter++;
   clientesData.push({ id, name, phone, branch, visits:0, lastVisit:nowDate() });
@@ -1227,6 +1235,7 @@ function generarRecibo() {
   const tipo     = document.getElementById('recibo-tipo').value;
   const orden    = document.getElementById('recibo-orden').value || '—';
   if (!cliente||!equipo||!servicio||!monto) { alert('Complete: Cliente, Equipo, Servicio y Monto.'); return; }
+  if (!soloLetras(cliente)) { alert('⚠️ El nombre del cliente no puede contener números.\nUse solo letras y espacios.'); return; }
   if (recibosData.find(r=>r.numRecibo===numRecibo)) {
     alert(`Ya existe el recibo ${numRecibo}. Cambie el número o deje vacío para generar automáticamente.`);
     return;
@@ -1423,7 +1432,9 @@ function guardarEdicionRecibo() {
   const idx = recibosData.findIndex(x => x.numRecibo === numRecibo);
   if (idx < 0) return;
 
-  recibosData[idx].cliente   = document.getElementById('edit-rec-cliente').value.trim();
+  const clienteEditRec = document.getElementById('edit-rec-cliente').value.trim();
+  if (!soloLetras(clienteEditRec)) { alert('⚠️ El nombre del cliente no puede contener números.\nUse solo letras y espacios.'); return; }
+  recibosData[idx].cliente   = clienteEditRec;
   recibosData[idx].telefono  = document.getElementById('edit-rec-telefono').value.trim();
   recibosData[idx].equipo    = document.getElementById('edit-rec-equipo').value.trim();
   recibosData[idx].servicio  = document.getElementById('edit-rec-servicio').value.trim();

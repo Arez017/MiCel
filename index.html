@@ -40,27 +40,14 @@
       <div class="login-logo">
         <div class="logo-icon">MC</div>
         <h1>MiCel</h1>
-        <p>Sistema de Gestión Integral v1.0</p>
+        <p>Sistema de Gestión Integral v4.0 · API</p>
       </div>
       <div class="form-group"><label>Usuario</label><input type="text" id="login-user" placeholder="ej: rramos"></div>
       <div class="form-group"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••"></div>
       <div id="login-error" style="display:none;background:var(--danger-light);color:var(--danger);padding:8px 12px;border-radius:6px;font-size:13px;text-align:center;margin-bottom:4px">Usuario o contraseña incorrectos</div>
       <button class="btn-login" onclick="doLogin()">Ingresar al sistema</button>
-      <div class="login-users-table">
-        <div class="lut-title">Usuarios del sistema</div>
-        <div class="lut-row lut-header"><span>Usuario</span><span>Contraseña</span><span>Rol</span></div>
-        <div class="lut-row"><span>micel</span><span>1234</span><span class="lut-admin">Admin</span></div>
-        <div class="lut-row"><span>kevsolutions</span><span>1234</span><span class="lut-admin">Admin</span></div>
-        <div class="lut-row"><span>tec03</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec04</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec05</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec06</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec07</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec08</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec09</span><span>1234</span><span class="lut-tec">Técnico</span></div>
-        <div class="lut-row"><span>tec10 <span style="color:var(--danger);font-size:10px">(inactivo)</span></span><span>1234</span><span class="lut-tec">Técnico</span></div>
-      </div>
-    </div>
+      <p style="margin-top:12px;font-size:12px;color:var(--gray-400);text-align:center">Ingresa con tu usuario del sistema</p>
+</div>
  
     <!-- Celular "milagro" (reparado) -->
     <div class="phone-scene phone-fixed" aria-hidden="true">
@@ -163,8 +150,8 @@
         <span id="topbar-rol" class="badge badge-purple" style="font-size:12px"></span>
         <select class="select-branch" onchange="filterSucursal(this.value)">
           <option value="all">Todas las sucursales</option>
-          <option value="Tiwanaku">Upea</option>
-          <option value="Marzo">KevSolutions</option>
+          <option value="Upea">Upea</option>
+          <option value="KevSolutions">KevSolutions</option>
         </select>
         <button class="btn-primary" id="topbar-btn" onclick="topAction('dashboard')">+ Nueva Orden</button>
       </div>
@@ -600,8 +587,9 @@
 <!-- MODAL: EDITAR ORDEN -->
 <div class="modal-overlay hidden" id="modal-editar-orden">
   <div class="modal-box">
-    <div class="modal-header"><h3>Editar Orden <span id="edit-order-code" style="color:var(--primary)"></span></h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <input type="hidden" id="edit-order-code">
+    <div class="modal-header"><h3>Editar Orden <span id="edit-order-code-label" style="color:var(--primary)"></span></h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <input type="hidden" id="edit-order-id" value="">
+    <input type="hidden" id="edit-order-code" value="">
     <div class="form-grid">
       <div class="form-group"><label>Cliente</label><input type="text" id="edit-order-client"></div>
       <div class="form-group"><label>Teléfono</label><input type="text" id="edit-order-phone"></div>
@@ -956,10 +944,9 @@
   </div>
 </div>
 
-  <script src="js/data.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="js/extensions.js"></script>
 <!-- NOTIFICACIÓN: ALERTA DE STOCK CRÍTICO / SIN STOCK -->
 <div id="stock-toast" class="hidden" style="position:fixed;bottom:20px;right:20px;z-index:300;max-width:320px">

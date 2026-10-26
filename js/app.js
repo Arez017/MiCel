@@ -114,7 +114,7 @@ function nav(id, el) {
 
 function topAction(id) {
   if (id === 'dashboard' || id === 'ordenes') openModal('orden');
-  else if (id === 'stock')   document.getElementById('new-rep-name')?.focus();
+  else if (id === 'stock')   openModal('nuevo-repuesto');
   else if (id === 'ventas')  openModal('venta');
   else if (id === 'celulares') document.getElementById('cel-modelo')?.focus();
   else if (id === 'clientes')openModal('cliente');
@@ -318,6 +318,32 @@ function guardarOrden() {
 // ===== STOCK (edición 100% inline, sin ventanas emergentes) =====
 let stockEditingId = null; // guarda qué fila está en modo edición ahora mismo
 
+
+// Lee un input file y devuelve Promise<string|null> (dataURL base64)
+function leerFotoComoBase64(inputEl) {
+  return new Promise((resolve) => {
+    if (!inputEl || !inputEl.files || !inputEl.files[0]) {
+      resolve(null);
+      return;
+    }
+    const file = inputEl.files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('Solo se permiten imágenes');
+      resolve(null);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('La imagen no puede superar 2 MB');
+      resolve(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
 function renderStock(data) {
   revisarAlertasStock();
   document.getElementById('stock-body').innerHTML = data.map(s => {
@@ -325,9 +351,13 @@ function renderStock(data) {
 
     const pct   = Math.min(100, Math.round((s.qty/Math.max(s.min*2,1))*100));
     const color = stockColor(s.qty, s.min);
+    const fotoHtml = s.foto
+      ? `<img src="${s.foto}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-200)">`
+      : `<div style="width:36px;height:36px;border-radius:6px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--gray-400)">📷</div>`;
     return `
       <tr>
         <td><code class="code-tag" style="font-size:10px">${s.id}</code></td>
+        <td>${fotoHtml}</td>
         <td>${s.name}</td>
         <td>${s.cat}</td>
         <td style="font-weight:600;color:${s.qty<s.min?'var(--danger)':'var(--gray-800)'}">${s.qty}</td>
@@ -341,7 +371,10 @@ function renderStock(data) {
         </td>
         <td>${stockBadge(s.qty, s.min)}</td>
         <td>
-          <button class="btn-sm btn-sm-primary" onclick="editarRepuesto('${s.id}')">${s.qty===0?'Reabastecer / Editar':'Editar'}</button>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn-sm btn-sm-primary" onclick="editarRepuesto('${s.id}')">${s.qty===0?'Reabastecer':'Editar'}</button>
+            <button class="btn-sm" onclick="abrirAjusteStock('${s.id}')">+/-</button>
+          </div>
         </td>
       </tr>`;
   }).join('');
@@ -349,9 +382,17 @@ function renderStock(data) {
 
 // Fila en modo edición: todos los campos se editan directo ahí, sin popup
 function filaStockEdicion(s) {
+  const fotoPreview = s.foto
+    ? `<img src="${s.foto}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;margin-bottom:4px;display:block">`
+    : '';
   return `
     <tr style="background:var(--surface-alt)">
       <td><code class="code-tag" style="font-size:10px">${s.id}</code></td>
+      <td>
+        ${fotoPreview}
+        <input type="file" id="stock-edit-foto-${s.id}" accept="image/*" style="font-size:11px;max-width:110px;display:block;margin-bottom:4px">
+        <input type="url" id="stock-edit-foto-url-${s.id}" placeholder="o URL..." style="width:110px;font-size:11px;padding:3px 5px;border:1px solid var(--gray-300);border-radius:4px">
+      </td>
       <td><input type="text" id="stock-edit-name-${s.id}" value="${s.name}" style="width:100%;padding:5px 7px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
       <td><input type="text" id="stock-edit-cat-${s.id}" value="${s.cat}" style="width:100%;padding:5px 7px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
       <td>
@@ -363,7 +404,7 @@ function filaStockEdicion(s) {
       </td>
       <td><input type="number" id="stock-edit-min-${s.id}" value="${s.min}" min="1" style="width:56px;padding:5px 4px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
       <td><input type="number" id="stock-edit-precio-${s.id}" value="${s.precio}" min="0" style="width:72px;padding:5px 4px;border:1px solid var(--gray-300);border-radius:4px;background:var(--surface);color:var(--gray-800);font-size:12px"></td>
-      <td colspan="2" style="color:var(--gray-400);font-size:11px">Editando ahora...</td>
+      <td colspan="2" style="color:var(--gray-400);font-size:11px">Editando...</td>
       <td>
         <div style="display:flex;gap:4px">
           <button class="btn-sm btn-sm-primary" onclick="guardarEdicionRepuesto('${s.id}')">Guardar</button>
@@ -399,9 +440,9 @@ function cancelarEdicionStock() {
   renderStock(stockData);
 }
 
-function guardarEdicionRepuesto(id) {
-  const idx = stockData.findIndex(x=>x.id===id);
-  if (idx<0) return;
+async function guardarEdicionRepuesto(id) {
+  const idx = stockData.findIndex(x => x.id === id);
+  if (idx < 0) return;
   const s = stockData[idx];
 
   const nuevoNombre = document.getElementById(`stock-edit-name-${id}`).value.trim();
@@ -430,11 +471,17 @@ function guardarEdicionRepuesto(id) {
     if (!continuar) return;
   }
 
+  // Foto nueva (opcional): archivo o URL
+  let nuevaFoto = await leerFotoComoBase64(document.getElementById(`stock-edit-foto-${id}`));
+  const fotoUrlEdit = (document.getElementById(`stock-edit-foto-url-${id}`)?.value || '').trim();
+  if (!nuevaFoto && fotoUrlEdit) nuevaFoto = fotoUrlEdit;
+
   s.name   = nuevoNombre;
   s.cat    = nuevaCat;
   s.qty    = qty;
   s.min    = min;
   s.precio = precio;
+  if (nuevaFoto) s.foto = nuevaFoto;
 
   stockEditingId = null;
   renderStock(stockData);
@@ -444,8 +491,8 @@ function guardarEdicionRepuesto(id) {
   }
 }
 
-// Alta de repuesto nuevo — formulario siempre visible arriba de la tabla (sin popup)
-function guardarRepuesto() {
+// Alta de repuesto nuevo — con foto opcional
+async function guardarRepuesto() {
   const name   = document.getElementById('new-rep-name').value.trim();
   const cat    = document.getElementById('new-rep-cat').value.trim();
   const qty    = parseInt(document.getElementById('new-rep-qty').value) || 0;
@@ -471,14 +518,25 @@ function guardarRepuesto() {
     if (!continuar) return;
   }
 
+  // Foto: archivo tiene prioridad; si no, se usa URL
+  let foto = await leerFotoComoBase64(document.getElementById('new-rep-foto'));
+  const fotoUrl = (document.getElementById('new-rep-foto-url')?.value || '').trim();
+  if (!foto && fotoUrl) foto = fotoUrl;
+
   const id = `REP-${String(repCounter).padStart(3,'0')}`;
   repCounter++;
-  stockData.push({ id, name, cat, qty, min, precio });
+  stockData.push({ id, name, cat, qty, min, precio, foto: foto || null });
   renderStock(stockData);
 
-  ['new-rep-name','new-rep-cat','new-rep-qty','new-rep-min','new-rep-precio'].forEach(fid => {
-    document.getElementById(fid).value = '';
+  ['new-rep-name','new-rep-cat','new-rep-qty','new-rep-min','new-rep-precio','new-rep-foto-url'].forEach(fid => {
+    const el = document.getElementById(fid);
+    if (el) el.value = '';
   });
+  const fotoInput = document.getElementById('new-rep-foto');
+  if (fotoInput) fotoInput.value = '';
+  const preview = document.getElementById('new-rep-foto-preview');
+  if (preview) preview.innerHTML = '';
+  if (typeof closeModal === 'function') closeModal();
 }
 
 // ===== NOTIFICACIÓN DE STOCK CRÍTICO / SIN STOCK =====
@@ -1352,13 +1410,14 @@ function limpiarFormRecibo() {
 function openModal(tipo) {
   document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.add('hidden'));
   const map = {
-    'orden':          'modal',
-    'editar-orden':   'modal-editar-orden',
-    'venta':          'modal-venta',
-    'cliente':        'modal-cliente',
-    'recibo-manual':  'modal-recibo',
-    'estado-orden':    'modal-estado',
-    'editar-recibo':   'modal-editar-recibo',
+    'orden':            'modal',
+    'editar-orden':     'modal-editar-orden',
+    'venta':            'modal-venta',
+    'cliente':          'modal-cliente',
+    'recibo-manual':    'modal-recibo',
+    'estado-orden':     'modal-estado',
+    'editar-recibo':    'modal-editar-recibo',
+    'nuevo-repuesto':   'modal-nuevo-repuesto',
   };
   const id = map[tipo];
   if (id) document.getElementById(id).classList.remove('hidden');
@@ -1447,3 +1506,67 @@ function guardarEdicionRecibo() {
   closeModal();
   renderRecibosHistorial();
 }
+
+// Preview de foto al elegir archivo (formulario nuevo repuesto)
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'new-rep-foto') {
+    const preview = document.getElementById('new-rep-foto-preview');
+    if (!preview) return;
+    const file = e.target.files && e.target.files[0];
+    if (!file) { preview.innerHTML = ''; return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      preview.innerHTML = `<img src="${ev.target.result}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200)">`;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+
+// ===== AJUSTE RÁPIDO DE STOCK (como Official: set / add / sub) =====
+function abrirAjusteStock(id) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  const modo = prompt(
+    `Ajustar stock de "${s.name}"\nActual: ${s.qty} unidades\n\nEscribe:\n  +10  → sumar 10\n  -3   → restar 3\n  =25  → fijar en 25\n\nO solo un número para fijar cantidad:`,
+    s.qty
+  );
+  if (modo === null || String(modo).trim() === '') return;
+
+  const raw = String(modo).trim();
+  let nuevo = s.qty;
+
+  if (raw.startsWith('+')) {
+    const n = parseInt(raw.slice(1), 10);
+    if (isNaN(n) || n < 0) { alert('Cantidad inválida'); return; }
+    nuevo = s.qty + n;
+  } else if (raw.startsWith('-')) {
+    const n = parseInt(raw.slice(1), 10);
+    if (isNaN(n) || n < 0) { alert('Cantidad inválida'); return; }
+    nuevo = Math.max(0, s.qty - n);
+  } else if (raw.startsWith('=')) {
+    const n = parseInt(raw.slice(1), 10);
+    if (isNaN(n) || n < 0) { alert('Cantidad inválida'); return; }
+    nuevo = n;
+  } else {
+    const n = parseInt(raw, 10);
+    if (isNaN(n) || n < 0) { alert('Cantidad inválida'); return; }
+    nuevo = n;
+  }
+
+  s.qty = nuevo;
+  renderStock(stockData);
+  if (nuevo === 0) alert(`"${s.name}" quedó SIN STOCK.`);
+  else if (nuevo < s.min) alert(`⚠️ "${s.name}" quedó en nivel CRÍTICO (${nuevo}/${s.min}).`);
+}
+
+
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'new-rep-foto-url') {
+    const preview = document.getElementById('new-rep-foto-preview');
+    if (!preview) return;
+    const url = e.target.value.trim();
+    if (!url) { preview.innerHTML = ''; return; }
+    preview.innerHTML = `<img src="${url}" alt="preview" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200)" onerror="this.style.display='none'">`;
+  }
+});

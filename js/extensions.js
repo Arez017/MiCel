@@ -631,28 +631,20 @@ let stockModalStatusFilter = 'all';
 let stockModalSearchQ = '';
 
 function initStockModal() {
-  // Override del botón Stock en nav para abrir el modal grande
+  // El botón "+ Agregar repuesto" del topbar abre el modal de nuevo repuesto
   const origTopAction = window.topAction;
   window.topAction = function(id) {
     if (id === 'stock') {
-      abrirStockModal();
+      openModal('nuevo-repuesto');
     } else {
       origTopAction(id);
     }
   };
-  // Override del nav para stock
-  const navStock = document.querySelector('.nav-item[onclick*="stock"]');
-  if (navStock) {
-    navStock.onclick = function() {
-      nav('stock', this);
-      setTimeout(abrirStockModal, 50);
-    };
-  }
 }
 
 function abrirStockModal() {
-  renderStockModal();
-  document.getElementById('modal-stock-detail').classList.remove('hidden');
+  // Compatibilidad: si se llama, abrir modal de nuevo repuesto
+  openModal('nuevo-repuesto');
 }
 
 function renderStockModal() {
@@ -788,6 +780,7 @@ function filterStockModalStatus(v) {
       'editar-usuario': 'modal-editar-usuario',
       'historial-add': 'modal-historial-add',
       'qr': 'modal-qr',
+      'nuevo-repuesto': 'modal-nuevo-repuesto',
     };
     const id = extra[tipo];
     if (id) {

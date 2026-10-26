@@ -2,10 +2,10 @@
 // API.JS — Cliente HTTP para MiCelOfficial
 // ==========================================
 
-// ⚠️ CAMBIA ESTA URL según tu entorno
-const API_BASE = 'http://localhost:8000/api';
+// ⚠️ Cambia esta URL según tu entorno
+const API_BASE = 'http://micel.test/api';
+// const API_BASE = 'http://localhost:8000/api';
 // const API_BASE = 'http://micelofficial.test/api';
-// const API_BASE = 'https://tu-dominio.com/api';
 
 const TOKEN_KEY = 'micel_token';
 const USER_KEY  = 'micel_user';
@@ -119,8 +119,6 @@ const OrdersAPI = {
   update: (id, body) => api(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   cambiarEstado: (id, status) =>
     api(`/orders/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  crearRecibo: (id, body = {}) =>
-    api(`/orders/${id}/recibo`, { method: 'POST', body: JSON.stringify(body) }),
   reporteTecnicos: () => api('/reportes/tecnicos'),
 };
 
@@ -192,4 +190,8 @@ const CelularesAPI = {
 
 const SeguimientoAPI = {
   get: (codigo) => api(`/seguimiento/${encodeURIComponent(codigo)}`),
+};
+
+const SucursalesAPI = {
+  list: () => api('/sucursales'),
 };

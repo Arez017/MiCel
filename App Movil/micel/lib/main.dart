@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
+import 'services/api_config.dart';
 import 'services/session.dart';
 import 'screens/login_screen.dart';
 import 'screens/client_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.init();
   final restored = await ClientSession.restore();
   runApp(MiCelApp(startLoggedIn: restored));
 }

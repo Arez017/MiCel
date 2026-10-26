@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
-import '../services/session.dart';
 import 'client_shell.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on ApiException catch (e) {
       setState(() => _error = e.message);
-    } catch (e) {
+    } catch (_) {
       setState(() => _error =
           'No se pudo conectar al servidor.\nRevisa la URL en api_config.dart y tu red.');
     } finally {
@@ -49,120 +48,149 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: RadialGradient(
-            center: Alignment(0.7, 0.7),
-            radius: 1.2,
-            colors: [Color(0x30FF1440), Color(0xFF000000)],
+            center: Alignment(0.85, -0.2),
+            radius: 1.1,
+            colors: [Color(0x44FF1440), Color(0xFF0A0A0B)],
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Container(
-              width: 380,
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                border: Border.all(color: AppColors.gray200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(14),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        blurRadius: 40,
+                        offset: const Offset(0, 16),
                       ),
-                      child: const Text('MC',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 18)),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text('MiCel Cliente',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.gray900)),
-                  const SizedBox(height: 4),
-                  const Text('Seguimiento de tu equipo y beneficios',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppColors.gray400)),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: _userCtrl,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Usuario',
-                      hintText: 'Tu usuario de cliente',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _passCtrl,
-                    obscureText: _obscure,
-                    onSubmitted: (_) => _doLogin(),
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _obscure = !_obscure),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppColors.primary, AppColors.primaryDark],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.35),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: const Text('MC',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 20,
+                                  letterSpacing: 0.5)),
+                        ),
                       ),
-                    ),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0x22E02424),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(_error!,
+                      const SizedBox(height: 20),
+                      const Text('MiCel Cliente',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Color(0xFFE02424), fontSize: 13)),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _doLogin,
-                      child: _loading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text('Ingresar'),
-                    ),
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.gray900)),
+                      const SizedBox(height: 6),
+                      const Text('Seguimiento de tu equipo y beneficios',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: AppColors.gray400, height: 1.35)),
+                      const SizedBox(height: 28),
+                      TextField(
+                        controller: _userCtrl,
+                        textInputAction: TextInputAction.next,
+                        style: const TextStyle(color: AppColors.gray900),
+                        decoration: const InputDecoration(
+                          labelText: 'Usuario',
+                          hintText: 'Tu usuario de cliente',
+                          prefixIcon: Icon(Icons.person_outline_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _passCtrl,
+                        obscureText: _obscure,
+                        onSubmitted: (_) => _doLogin(),
+                        style: const TextStyle(color: AppColors.gray900),
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscure
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined),
+                            onPressed: () => setState(() => _obscure = !_obscure),
+                          ),
+                        ),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+                          ),
+                          child: Text(_error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Color(0xFFFF8A8A), fontSize: 13, height: 1.35)),
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _doLogin,
+                          child: _loading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2.4, color: Colors.white),
+                                )
+                              : const Text('Ingresar'),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'La cuenta la crea el personal de MiCel al entregarte el equipo.\n'
+                        'También puedes consultar con el código de seguimiento sin iniciar sesión.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.gray400.withValues(alpha: 0.9),
+                            height: 1.45),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  const Text(
-                    'La cuenta la crea el personal de MiCel al entregarte el equipo.\nTambién puedes consultar con el código de seguimiento sin iniciar sesión (pestaña Seguimiento).',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: AppColors.gray400, height: 1.4),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

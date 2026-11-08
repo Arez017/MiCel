@@ -1,0 +1,24 @@
+CuotaLock - archivos para copiar encima de un proyecto Flutter nuevo
+=====================================================================
+
+1) Crea el proyecto (el nombre de paquete debe ser exactamente este):
+     flutter create --org com.cuotalock --project-name bloqueo --platforms android cuotalock
+
+2) Copia estas carpetas/archivos del zip dentro de la carpeta "cuotalock" creada,
+   reemplazando los existentes:
+     lib/main.dart
+     android/app/src/main/AndroidManifest.xml
+     android/app/src/main/res/xml/device_admin.xml                    (carpeta xml nueva)
+     android/app/src/main/kotlin/com/cuotalock/bloqueo/MainActivity.kt   (reemplaza)
+     android/app/src/main/kotlin/com/cuotalock/bloqueo/AdminReceiver.kt
+     android/app/src/main/kotlin/com/cuotalock/bloqueo/EventReceiver.kt
+     android/app/src/main/kotlin/com/cuotalock/bloqueo/Policy.kt
+
+3) Edita la configuración:
+     - Policy.kt  -> SECRET
+     - main.dart  -> kComercio, kTelefono, kPinVendedor
+     - herramientas/generar_codigo.py -> SECRET (la misma de Policy.kt)
+
+4) herramientas/ NO va dentro del proyecto Flutter: es para el vendedor / MiCel.
+
+La guía completa (emulador, celular real, pruebas, Laravel) está en el documento aparte.

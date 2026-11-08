@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
-import '../services/session.dart';
 import 'home_screen.dart';
 import 'coins_screen.dart';
 import 'tracking_screen.dart';
@@ -36,20 +35,23 @@ class _ClientShellState extends State<ClientShell> {
           currentIndex: _index,
           onTap: (i) => setState(() => _index = i),
           backgroundColor: AppColors.surface,
-          items: [
-            const BottomNavigationBarItem(
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.gray400,
+          items: const [
+            BottomNavigationBarItem(
               icon: Icon(Icons.home_rounded),
               label: 'Inicio',
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.monetization_on_rounded),
+              icon: Icon(Icons.monetization_on_rounded),
               label: 'Coins',
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.qr_code_scanner_rounded),
               label: 'Seguimiento',
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),
               label: 'Perfil',
             ),

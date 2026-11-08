@@ -1,0 +1,301 @@
+{
+  "words": [
+    "a",
+    "abiert",
+    "abren",
+    "adi",
+    "agradezco",
+    "al",
+    "artificial",
+    "atencion",
+    "backpropagation",
+    "bateria",
+    "bot",
+    "buen",
+    "bye",
+    "cambi",
+    "carga",
+    "cargador",
+    "celul",
+    "chatbot",
+    "chau",
+    "cierran",
+    "cobertura",
+    "coins",
+    "como",
+    "con",
+    "cost",
+    "costo",
+    "cotizacion",
+    "cu",
+    "cuant",
+    "cuanto",
+    "cuesta",
+    "de",
+    "debo",
+    "dej",
+    "del",
+    "dia",
+    "direccion",
+    "document",
+    "donde",
+    "dura",
+    "el",
+    "entreno",
+    "equipo",
+    "eres",
+    "esta",
+    "estado",
+    "estan",
+    "fallo",
+    "fidelidad",
+    "funcion",
+    "funcionan",
+    "gano",
+    "garanti",
+    "garantia",
+    "graci",
+    "hasta",
+    "hecho",
+    "hello",
+    "hey",
+    "hi",
+    "hola",
+    "hora",
+    "horari",
+    "horario",
+    "ia",
+    "inteligencia",
+    "la",
+    "lista",
+    "listo",
+    "llev",
+    "llevo",
+    "local",
+    "los",
+    "luego",
+    "malogra",
+    "mes",
+    "mi",
+    "micel",
+    "much",
+    "necesito",
+    "neuronal",
+    "nos",
+    "orden",
+    "otra",
+    "pantalla",
+    "para",
+    "pin",
+    "preci",
+    "precio",
+    "proyecto",
+    "punt",
+    "que",
+    "quien",
+    "quiero",
+    "reclamo",
+    "red",
+    "repar",
+    "reparacion",
+    "requisit",
+    "sab",
+    "sale",
+    "salud",
+    "se",
+    "seguimiento",
+    "servicio",
+    "si",
+    "sirven",
+    "sobre",
+    "son",
+    "soy",
+    "tal",
+    "tall",
+    "tard",
+    "te",
+    "thanks",
+    "tiene",
+    "ubicacion",
+    "una",
+    "usan",
+    "va",
+    "vem",
+    "vez",
+    "vip",
+    "ya"
+  ],
+  "tags": [
+    "coins",
+    "despedida",
+    "garantia",
+    "gracias",
+    "horario",
+    "orden_estado",
+    "precios",
+    "que_llevar",
+    "quien_eres",
+    "saludo",
+    "tecnologia"
+  ],
+  "responses": {
+    "saludo": [
+      "¡Hola! Soy el asistente MiCEL basado en una red neuronal propia. ¿En qué te ayudo?",
+      "¡Buenas! Pregúntame por órdenes, coins, garantía o el taller."
+    ],
+    "despedida": [
+      "¡Hasta luego! Que te vaya bien.",
+      "Fue un gusto ayudarte. Vuelve cuando quieras."
+    ],
+    "gracias": [
+      "¡Con gusto!",
+      "Para eso estoy. ¿Algo más?"
+    ],
+    "orden_estado": [
+      "📱 Seguimiento de reparación\nUsa el código de tu orden (ej. OS-0012) en la pestaña Seguimiento de la app o acércate al taller con tu recibo. Estados típicos: recibido, en proceso, listo, entregado."
+    ],
+    "coins": [
+      "🪙 MiCEL Coins\n• Se acumulan al completar servicios en el taller\n• Aprox. canje referencial según política del local\n• Clientes frecuentes pueden ser VIP\nRevisa tus coins en la app. No reemplazan el pago del servicio actual salvo promoción vigente."
+    ],
+    "garantia": [
+      "🛡️ Garantías MiCEL (según el servicio):\n• Cambio de pantalla: 3 meses\n• Cambio de batería: 6 meses\n• Pin de carga / conectores: 2 meses\n• Software (flasheo, cuentas): 15 días\nNo cubre golpes, humedad, ni fallas distintas a la reparación. Trae tu recibo u orden."
+    ],
+    "precios": [
+      "💰 Precios referenciales MiCEL (pueden variar según modelo):\n• Cambio de pantalla: desde Bs 180 – 350\n• Cambio de batería: desde Bs 80 – 150\n• Pin de carga: desde Bs 50 – 120\n• Flasheo / firmware: desde Bs 40 – 80\n• Eliminación cuenta Google/Xiaomi: desde Bs 50 – 100\nEl técnico confirma el monto exacto en el taller según el equipo."
+    ],
+    "horario": [
+      "📍 Taller MiCEL\n• Sucursales: El Alto (y las configuradas en el sistema)\n• Horario referencial: Lun–Sáb 09:00 a 19:00\n• Domingos: según local\nLleva tu equipo, patrón/contraseña si aplica y el recibo de la orden."
+    ],
+    "que_llevar": [
+      "Lleva el celular, si puedes el cargador, la contraseña o patrón, y describe la falla. Te entregan orden/recibo con código de seguimiento."
+    ],
+    "quien_eres": [
+      "Soy un chatbot de MiCEL cuya comprensión de intenciones fue entrenada con una red neuronal (MLP) entrenada desde cero sobre un dataset de preguntas del taller."
+    ],
+    "tecnologia": [
+      "El modelo es un perceptrón multicapa (MLP): entrada bag-of-words → capas ocultas con ReLU → softmax de intenciones. Se entrenó con descenso de gradiente y backpropagation sobre intents etiquetados."
+    ]
+  },
+  "history": [
+    {
+      "epoch": 781,
+      "loss": 0.0362369786994889,
+      "acc": 1.0
+    },
+    {
+      "epoch": 782,
+      "loss": 0.03611071827611728,
+      "acc": 1.0
+    },
+    {
+      "epoch": 783,
+      "loss": 0.035982610834693445,
+      "acc": 1.0
+    },
+    {
+      "epoch": 784,
+      "loss": 0.035856041445331555,
+      "acc": 1.0
+    },
+    {
+      "epoch": 785,
+      "loss": 0.03573768229498451,
+      "acc": 1.0
+    },
+    {
+      "epoch": 786,
+      "loss": 0.03561270630810068,
+      "acc": 1.0
+    },
+    {
+      "epoch": 787,
+      "loss": 0.035487218368618345,
+      "acc": 1.0
+    },
+    {
+      "epoch": 788,
+      "loss": 0.03536910363580782,
+      "acc": 1.0
+    },
+    {
+      "epoch": 789,
+      "loss": 0.03524782727229283,
+      "acc": 1.0
+    },
+    {
+      "epoch": 790,
+      "loss": 0.035135468057785765,
+      "acc": 1.0
+    },
+    {
+      "epoch": 791,
+      "loss": 0.03500589700454009,
+      "acc": 1.0
+    },
+    {
+      "epoch": 792,
+      "loss": 0.03488725285193309,
+      "acc": 1.0
+    },
+    {
+      "epoch": 793,
+      "loss": 0.03477243228712741,
+      "acc": 1.0
+    },
+    {
+      "epoch": 794,
+      "loss": 0.034652621900742836,
+      "acc": 1.0
+    },
+    {
+      "epoch": 795,
+      "loss": 0.03453361276632243,
+      "acc": 1.0
+    },
+    {
+      "epoch": 796,
+      "loss": 0.03442162013678098,
+      "acc": 1.0
+    },
+    {
+      "epoch": 797,
+      "loss": 0.03430567409730893,
+      "acc": 1.0
+    },
+    {
+      "epoch": 798,
+      "loss": 0.034190430488216066,
+      "acc": 1.0
+    },
+    {
+      "epoch": 799,
+      "loss": 0.034078770719836414,
+      "acc": 1.0
+    },
+    {
+      "epoch": 800,
+      "loss": 0.03395914917092174,
+      "acc": 1.0
+    }
+  ],
+  "final_acc": 1.0,
+  "final_loss": 0.03395914917092174,
+  "architecture": {
+    "type": "MLP",
+    "layers": [
+      124,
+      32,
+      16,
+      11
+    ],
+    "activations": [
+      "relu",
+      "relu",
+      "softmax"
+    ],
+    "loss": "cross_entropy",
+    "optimizer": "sgd",
+    "epochs": 800,
+    "lr": 0.08
+  }
+}

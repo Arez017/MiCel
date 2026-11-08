@@ -11,6 +11,7 @@ class ClientSession {
   static String get nombre => (cliente?['name'] ?? 'Cliente').toString();
   static String get phone => (cliente?['phone'] ?? '').toString();
   static String get code => (cliente?['code'] ?? '').toString();
+  static String get username => (cliente?['username'] ?? '').toString();
   static int get coins => (cliente?['coins'] is int)
       ? cliente!['coins'] as int
       : int.tryParse('${cliente?['coins'] ?? 0}') ?? 0;

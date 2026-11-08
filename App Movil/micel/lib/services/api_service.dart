@@ -39,8 +39,13 @@ class ApiService {
       if (data is Map) {
         msg = (data['message'] ?? data['error'] ?? msg).toString();
         if (data['errors'] is Map) {
-          final errs = (data['errors'] as Map).values.expand((e) => e is List ? e : [e]);
-          msg = errs.join('\n');
+          final errs = data['errors'] as Map;
+          if (errs.isNotEmpty) {
+            final first = errs.values.first;
+            if (first is List && first.isNotEmpty) {
+              msg = first.first.toString();
+            }
+          }
         }
       }
       throw ApiException(msg, res.statusCode);
@@ -48,8 +53,10 @@ class ApiService {
     return data;
   }
 
-  /// Login cliente (cuenta creada por el staff en el panel web)
-  static Future<Map<String, dynamic>> loginCliente(String username, String password) async {
+  static Future<Map<String, dynamic>> loginCliente(String username, String password) =>
+      login(username, password);
+
+  static Future<Map<String, dynamic>> login(String username, String password) async {
     final res = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/cliente/login'),
       headers: _headers(),
@@ -100,11 +107,92 @@ class ApiService {
     return data is List ? data : [];
   }
 
-  /// Seguimiento público por código de orden (sin login)
   static Future<Map<String, dynamic>> seguimiento(String codigo) async {
     final res = await http.get(
       Uri.parse('${ApiConfig.baseUrl}/seguimiento/${Uri.encodeComponent(codigo.trim())}'),
       headers: _headers(),
+    );
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  /// Nombre, teléfono, username
+  static Future<Map<String, dynamic>> updatePerfil({
+    String? name,
+    String? phone,
+    String? username,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (phone != null) body['phone'] = phone;
+    if (username != null) body['username'] = username;
+
+    final res = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/cliente/perfil'),
+      headers: _headers(auth: true),
+      body: jsonEncode(body),
+    );
+    final data = await _handle(res) as Map<String, dynamic>;
+    if (data['cliente'] is Map) {
+      await ClientSession.save(
+        ClientSession.token!,
+        Map<String, dynamic>.from(data['cliente'] as Map),
+      );
+    }
+    return data;
+  }
+
+  /// Restablecer contraseña (sin sesión) — usuario + teléfono
+  static Future<void> recuperarPassword({
+    required String username,
+    required String phone,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final res = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/cliente/recuperar-password'),
+      headers: _headers(auth: false),
+      body: jsonEncode({
+        'username': username,
+        'phone': phone,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+    await _handle(res);
+  }
+
+  /// Cambio de contraseña
+  static Future<void> changePassword({
+    required String passwordActual,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final res = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/cliente/password'),
+      headers: _headers(auth: true),
+      body: jsonEncode({
+        'password_actual': passwordActual,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+    await _handle(res);
+  }
+
+
+  /// POST /cliente/chat — asistente MiCEL
+  static Future<Map<String, dynamic>> chat(
+    String message, {
+    List<Map<String, String>> history = const [],
+  }) async {
+    final res = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/cliente/chat'),
+      headers: _headers(auth: true),
+      body: jsonEncode({
+        'message': message,
+        'history': history,
+      }),
     );
     final data = await _handle(res);
     return Map<String, dynamic>.from(data as Map);

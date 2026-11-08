@@ -1,0 +1,190 @@
+{
+  "intents": [
+    {
+      "tag": "saludo",
+      "patterns": [
+        "buen dia",
+        "buenas",
+        "buenas tardes",
+        "hello",
+        "hey",
+        "hi",
+        "hola",
+        "que tal",
+        "saludos"
+      ],
+      "responses": [
+        "¡Hola! Soy el asistente MiCEL basado en una red neuronal propia. ¿En qué te ayudo?",
+        "¡Buenas! Pregúntame por órdenes, coins, garantía o el taller."
+      ]
+    },
+    {
+      "tag": "despedida",
+      "patterns": [
+        "adios",
+        "chau",
+        "hasta luego",
+        "nos vemos",
+        "bye",
+        "gracias adios"
+      ],
+      "responses": [
+        "¡Hasta luego! Que te vaya bien.",
+        "Fue un gusto ayudarte. Vuelve cuando quieras."
+      ]
+    },
+    {
+      "tag": "gracias",
+      "patterns": [
+        "gracias",
+        "muchas gracias",
+        "te agradezco",
+        "thanks"
+      ],
+      "responses": [
+        "¡Con gusto!",
+        "Para eso estoy. ¿Algo más?"
+      ]
+    },
+    {
+      "tag": "orden_estado",
+      "patterns": [
+        "como va la reparacion",
+        "como va mi celular",
+        "donde esta mi orden",
+        "estado de la orden",
+        "estado de mi reparacion",
+        "estado orden",
+        "mi orden",
+        "orden",
+        "quiero saber mi orden",
+        "seguimiento",
+        "seguimiento de orden",
+        "ya esta listo mi equipo"
+      ],
+      "responses": [
+        "📱 Seguimiento de reparación\nUsa el código de tu orden (ej. OS-0012) en la pestaña Seguimiento de la app o acércate al taller con tu recibo. Estados típicos: recibido, en proceso, listo, entregado."
+      ]
+    },
+    {
+      "tag": "coins",
+      "patterns": [
+        "coins",
+        "como funcionan los puntos",
+        "como gano coins",
+        "micel coins",
+        "para que sirven los coins",
+        "puntos",
+        "puntos de fidelidad",
+        "que son los coins",
+        "soy vip"
+      ],
+      "responses": [
+        "🪙 MiCEL Coins\n• Se acumulan al completar servicios en el taller\n• Aprox. canje referencial según política del local\n• Clientes frecuentes pueden ser VIP\nRevisa tus coins en la app. No reemplazan el pago del servicio actual salvo promoción vigente."
+      ]
+    },
+    {
+      "tag": "garantia",
+      "patterns": [
+        "cobertura de garantia",
+        "cuanto dura la garantia",
+        "cuantos meses de garantia",
+        "fallo otra vez",
+        "garantia",
+        "garantia de bateria",
+        "garantia de pantalla",
+        "garantia del servicio",
+        "garantia pin de carga",
+        "garantias",
+        "garantías",
+        "la garantia",
+        "reclamo de garantia",
+        "si se malogra otra vez",
+        "sobre garantia",
+        "tiene garantia"
+      ],
+      "responses": [
+        "🛡️ Garantías MiCEL (según el servicio):\n• Cambio de pantalla: 3 meses\n• Cambio de batería: 6 meses\n• Pin de carga / conectores: 2 meses\n• Software (flasheo, cuentas): 15 días\nNo cubre golpes, humedad, ni fallas distintas a la reparación. Trae tu recibo u orden."
+      ]
+    },
+    {
+      "tag": "precios",
+      "patterns": [
+        "costo del servicio",
+        "costos",
+        "cotizacion",
+        "cuanto cuesta",
+        "cuanto sale cambiar bateria",
+        "lista de precios",
+        "precio",
+        "precio bateria",
+        "precio de pantalla",
+        "precio pin de carga",
+        "precios",
+        "precios de reparacion"
+      ],
+      "responses": [
+        "💰 Precios referenciales MiCEL (pueden variar según modelo):\n• Cambio de pantalla: desde Bs 180 – 350\n• Cambio de batería: desde Bs 80 – 150\n• Pin de carga: desde Bs 50 – 120\n• Flasheo / firmware: desde Bs 40 – 80\n• Eliminación cuenta Google/Xiaomi: desde Bs 50 – 100\nEl técnico confirma el monto exacto en el taller según el equipo."
+      ]
+    },
+    {
+      "tag": "horario",
+      "patterns": [
+        "a que hora abren",
+        "cuando cierran",
+        "direccion del local",
+        "estan abiertos",
+        "horario",
+        "horario de atencion",
+        "horarios",
+        "horarios del taller",
+        "ubicacion"
+      ],
+      "responses": [
+        "📍 Taller MiCEL\n• Sucursales: El Alto (y las configuradas en el sistema)\n• Horario referencial: Lun–Sáb 09:00 a 19:00\n• Domingos: según local\nLleva tu equipo, patrón/contraseña si aplica y el recibo de la orden."
+      ]
+    },
+    {
+      "tag": "que_llevar",
+      "patterns": [
+        "documentos para dejar el celular",
+        "necesito el cargador",
+        "que debo llevar",
+        "que llevo",
+        "que llevo al taller",
+        "requisitos",
+        "requisitos para reparar"
+      ],
+      "responses": [
+        "Lleva el celular, si puedes el cargador, la contraseña o patrón, y describe la falla. Te entregan orden/recibo con código de seguimiento."
+      ]
+    },
+    {
+      "tag": "quien_eres",
+      "patterns": [
+        "quien eres",
+        "que eres",
+        "eres una ia",
+        "como funcionas",
+        "red neuronal",
+        "chatbot de que"
+      ],
+      "responses": [
+        "Soy un chatbot de MiCEL cuya comprensión de intenciones fue entrenada con una red neuronal (MLP) entrenada desde cero sobre un dataset de preguntas del taller."
+      ]
+    },
+    {
+      "tag": "tecnologia",
+      "patterns": [
+        "como esta hecho el bot",
+        "que red neuronal usan",
+        "backpropagation",
+        "con que se entreno",
+        "inteligencia artificial del proyecto"
+      ],
+      "responses": [
+        "El modelo es un perceptrón multicapa (MLP): entrada bag-of-words → capas ocultas con ReLU → softmax de intenciones. Se entrenó con descenso de gradiente y backpropagation sobre intents etiquetados."
+      ]
+    }
+  ]
+}

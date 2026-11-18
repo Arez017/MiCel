@@ -1,24 +1,21 @@
-CuotaLock - archivos para copiar encima de un proyecto Flutter nuevo
-=====================================================================
+CuotaLock con la interfaz de MiCel
+===================================
 
-1) Crea el proyecto (el nombre de paquete debe ser exactamente este):
-     flutter create --org com.cuotalock --project-name bloqueo --platforms android cuotalock
+Copia estas carpetas dentro de tu proyecto Flutter cuotalock, aceptando reemplazar:
 
-2) Copia estas carpetas/archivos del zip dentro de la carpeta "cuotalock" creada,
-   reemplazando los existentes:
-     lib/main.dart
-     android/app/src/main/AndroidManifest.xml
-     android/app/src/main/res/xml/device_admin.xml                    (carpeta xml nueva)
-     android/app/src/main/kotlin/com/cuotalock/bloqueo/MainActivity.kt   (reemplaza)
-     android/app/src/main/kotlin/com/cuotalock/bloqueo/AdminReceiver.kt
-     android/app/src/main/kotlin/com/cuotalock/bloqueo/EventReceiver.kt
-     android/app/src/main/kotlin/com/cuotalock/bloqueo/Policy.kt
+  lib/main.dart                      (REEMPLAZA el actual: misma lógica, nueva interfaz)
+  lib/app_theme.dart                 (NUEVO: es el mismo archivo de la app MiCel)
+  android/app/src/main/res/mipmap-*/ic_launcher.png   (REEMPLAZA el icono por defecto de Flutter)
 
-3) Edita la configuración:
-     - Policy.kt  -> SECRET
-     - main.dart  -> kComercio, kTelefono, kPinVendedor
-     - herramientas/generar_codigo.py -> SECRET (la misma de Policy.kt)
+No hay que tocar pubspec.yaml ni agregar paquetes. No cambia nada del código Kotlin.
 
-4) herramientas/ NO va dentro del proyecto Flutter: es para el vendedor / MiCel.
+Luego, en la terminal del proyecto:
 
-La guía completa (emulador, celular real, pruebas, Laravel) está en el documento aparte.
+  flutter clean
+  flutter run -d emulator-5554
+
+Notas
+- El panel del vendedor ahora se abre manteniendo pulsado el LOGO "MC / CuotaLock" de arriba (antes era el título).
+- Los 3 valores a editar siguen al inicio de main.dart: kComercio, kTelefono y kPinVendedor.
+- Si cambias los colores de MiCel en su app_theme.dart, copia ese archivo también aquí para mantener ambas apps iguales.
+- Si el icono no cambia en el celular, desinstala la app (o libera el equipo) y vuelve a instalarla.

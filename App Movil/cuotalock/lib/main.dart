@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_theme.dart';
+
 // ================= CONFIGURACIÓN (edita estos 3 valores) =================
-const String kComercio = 'Tu Tienda de Celulares';
+const String kComercio = 'MiCel';
 const String kTelefono = '70000000';
-const String kPinVendedor = '2468'; // PIN del panel del vendedor (mantener pulsado el título)
+const String kPinVendedor = '2468'; // PIN del panel del vendedor (mantener pulsado el logo)
 // =========================================================================
 
 const MethodChannel _canal = MethodChannel('cuotalock/native');
@@ -62,8 +64,7 @@ class Nativo {
 
 String _dos(int n) => n.toString().padLeft(2, '0');
 
-String fmtFecha(DateTime d) =>
-    '${_dos(d.day)}/${_dos(d.month)}/${d.year} ${_dos(d.hour)}:${_dos(d.minute)}';
+String fmtDia(DateTime d) => '${_dos(d.day)}/${_dos(d.month)}/${d.year}';
 
 String fmtRestante(Duration d) {
   if (d.isNegative) return 'Vencido';
@@ -81,17 +82,169 @@ class CuotaLockApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         title: 'CuotaLock',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.indigo,
-            brightness: Brightness.dark,
-          ),
-        ),
+        theme: AppTheme.theme,
         home: const Principal(),
       );
 }
 
+// ---------------------------------------------------------------------------
+// Piezas visuales comunes (mismo estilo del panel y la app MiCel)
+// ---------------------------------------------------------------------------
+
+/// Cuadro rojo con "MC", igual al de la app MiCel.
+class MarcaMiCel extends StatelessWidget {
+  final double size;
+  const MarcaMiCel({super.key, this.size = 40});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(size * 0.26),
+      ),
+      child: Text(
+        'MC',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          fontSize: size * 0.34,
+        ),
+      ),
+    );
+  }
+}
+
+/// Fondo con degradado oscuro/rojizo de MiCel.
+class FondoMiCel extends StatelessWidget {
+  final Widget child;
+  final Color arriba;
+  const FondoMiCel({
+    super.key,
+    required this.child,
+    this.arriba = const Color(0xFF2A0A12),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [arriba, const Color(0xFF0D0D0F)],
+        ),
+      ),
+      child: SafeArea(child: child),
+    );
+  }
+}
+
+class TarjetaMiCel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  const TarjetaMiCel({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(18),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: child,
+    );
+  }
+}
+
+class IconoEstado extends StatelessWidget {
+  final IconData icono;
+  final Color color;
+  final double size;
+  final bool brillo;
+  const IconoEstado({
+    super.key,
+    required this.icono,
+    required this.color,
+    this.size = 80,
+    this.brillo = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color.withValues(alpha: 0.15),
+        border: Border.all(color: color.withValues(alpha: 0.45), width: 1.5),
+        boxShadow: brillo
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.35),
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
+      ),
+      child: Icon(icono, color: color, size: size * 0.5),
+    );
+  }
+}
+
+class _Dato extends StatelessWidget {
+  final String titulo;
+  final String valor;
+  const _Dato({required this.titulo, required this.valor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: const TextStyle(color: AppColors.gray400, fontSize: 11),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            valor,
+            style: const TextStyle(
+              color: AppColors.gray900,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pantalla principal: decide qué mostrar según el estado del equipo
+// ---------------------------------------------------------------------------
 class Principal extends StatefulWidget {
   const Principal({super.key});
 
@@ -160,13 +313,19 @@ class _PrincipalState extends State<Principal> with WidgetsBindingObserver {
     final e = _e;
     if (e == null) {
       return Scaffold(
-        body: Center(
-          child: _error != null
-              ? Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text('Error: $_error'),
-                )
-              : const CircularProgressIndicator(),
+        body: FondoMiCel(
+          child: Center(
+            child: _error != null
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Error: $_error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.gray400),
+                    ),
+                  )
+                : const CircularProgressIndicator(color: AppColors.primary),
+          ),
         ),
       );
     }
@@ -188,38 +347,78 @@ class PantallaNoConfigurada extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('CuotaLock')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const Icon(Icons.settings_suggest, size: 72, color: Colors.amber),
-          const SizedBox(height: 12),
-          const Text(
-            'Equipo sin configurar',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Esta app necesita ser "Device Owner" para poder bloquear el equipo '
-            'y evitar que se desinstale. Con el celular conectado por USB (y sin '
-            'cuentas de Google agregadas) ejecuta en la computadora:',
-          ),
-          const SizedBox(height: 12),
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: SelectableText(
-                'adb shell dpm set-device-owner com.cuotalock.bloqueo/.AdminReceiver',
-                style: TextStyle(fontFamily: 'monospace'),
+      backgroundColor: AppColors.bg,
+      body: FondoMiCel(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: TarjetaMiCel(
+                padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                child: Column(
+                  children: [
+                    const MarcaMiCel(size: 56),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Equipo sin configurar',
+                      style: TextStyle(
+                        color: AppColors.gray900,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Esta app necesita ser «Device Owner» para bloquear el equipo '
+                      'y evitar que se desinstale. Con el celular conectado por USB '
+                      '(y sin cuentas agregadas) ejecuta en la computadora:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.gray400,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface2,
+                        borderRadius: BorderRadius.circular(AppTheme.radius),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const SelectableText(
+                        'adb shell dpm set-device-owner com.cuotalock.bloqueo/.AdminReceiver',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          color: AppColors.gray800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'ID del equipo: ${estado.deviceId}',
+                      style: const TextStyle(
+                        color: AppColors.gray900,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Esta pantalla se actualiza sola cuando el comando funcione.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.gray400, fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Text('ID del equipo: ${estado.deviceId}'),
-          const SizedBox(height: 8),
-          const Text('Esta pantalla se actualiza sola cuando el comando funcione.'),
-        ],
+        ),
       ),
     );
   }
@@ -236,61 +435,183 @@ class PantallaInicio extends StatelessWidget {
   Widget build(BuildContext context) {
     final vence = estado.vence;
     final restante = vence?.difference(DateTime.now());
+
+    final Color acento;
+    final IconData icono;
+    final String titulo;
+    if (vence == null) {
+      acento = AppColors.gray400;
+      icono = Icons.hourglass_empty_rounded;
+      titulo = 'Sin fecha configurada';
+    } else if (restante!.inHours < 72) {
+      acento = AppColors.warning;
+      icono = Icons.schedule_rounded;
+      titulo = 'Cuota por vencer';
+    } else {
+      acento = AppColors.success;
+      icono = Icons.verified_user_rounded;
+      titulo = 'Equipo al día';
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: GestureDetector(
-          onLongPress: () => abrirPanelVendedor(context),
-          child: const Text('CuotaLock'),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+      backgroundColor: AppColors.bg,
+      body: FondoMiCel(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          children: [
+            // Encabezado con la marca (mantener pulsado = panel del vendedor)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: () => abrirPanelVendedor(context),
+              child: Row(
+                children: [
+                  const MarcaMiCel(size: 44),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'CuotaLock',
+                          style: TextStyle(
+                            color: AppColors.gray900,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          'Equipo financiado por $kComercio',
+                          style: const TextStyle(
+                            color: AppColors.gray400,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+
+            // Estado del equipo
+            TarjetaMiCel(
+              padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
               child: Column(
                 children: [
-                  const Icon(Icons.verified_user, size: 64, color: Colors.greenAccent),
-                  const SizedBox(height: 8),
+                  IconoEstado(icono: icono, color: acento, size: 84),
+                  const SizedBox(height: 14),
                   Text(
-                    vence == null ? 'Sin fecha configurada' : 'Equipo al día',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    titulo,
+                    style: const TextStyle(
+                      color: AppColors.gray900,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  const SizedBox(height: 16),
                   if (vence != null) ...[
-                    Text('Próximo vencimiento: ${fmtFecha(vence)}'),
-                    const SizedBox(height: 4),
-                    Text('Tiempo restante: ${fmtRestante(restante!)}'),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _Dato(
+                            titulo: 'Próximo vencimiento',
+                            valor: fmtDia(vence),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _Dato(
+                            titulo: 'Tiempo restante',
+                            valor: fmtRestante(restante!),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.phone_android),
-              title: const Text('ID del equipo'),
-              subtitle: SelectableText(
-                estado.deviceId,
-                style: const TextStyle(fontSize: 20, letterSpacing: 2),
+            const SizedBox(height: 12),
+
+            // ID del equipo
+            TarjetaMiCel(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.phone_android_rounded, color: AppColors.gray400),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ID del equipo',
+                          style: TextStyle(color: AppColors.gray400, fontSize: 12),
+                        ),
+                        const SizedBox(height: 2),
+                        SelectableText(
+                          estado.deviceId,
+                          style: const TextStyle(
+                            color: AppColors.gray900,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Copiar ID',
+                    icon: const Icon(Icons.copy_rounded, size: 20),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: estado.deviceId));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('ID copiado')),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            icon: const Icon(Icons.payments),
-            label: const Text('Ingresar código de pago'),
-            onPressed: () => _dialogoCodigo(context),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Comercio: $kComercio · Tel. $kTelefono',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white60),
-          ),
-        ],
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.payments_rounded),
+                label: const Text('Ingresar código de pago'),
+                onPressed: () => _dialogoCodigo(context),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Contacto del comercio
+            TarjetaMiCel(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.storefront_rounded, color: AppColors.gray400),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '$kComercio · Tel. $kTelefono',
+                      style: const TextStyle(color: AppColors.gray800, fontSize: 13),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => Nativo.marcar(kTelefono),
+                    icon: const Icon(Icons.call_rounded, size: 18),
+                    label: const Text('Llamar'),
+                    style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -300,16 +621,31 @@ class PantallaInicio extends StatelessWidget {
     final enviar = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Código de pago'),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: const Text(
+          'Código de pago',
+          style: TextStyle(color: AppColors.gray900, fontWeight: FontWeight.w800),
+        ),
         content: TextField(
           controller: ctrl,
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9-]'))],
+          style: const TextStyle(color: AppColors.gray900, letterSpacing: 1.5),
           decoration: const InputDecoration(hintText: '20800-123456'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Aplicar')),
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.gray400)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Aplicar'),
+          ),
         ],
       ),
     );
@@ -323,23 +659,38 @@ class PantallaInicio extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Panel del vendedor (mantener pulsado el título "CuotaLock")
+// Panel del vendedor (mantener pulsado el logo / título "CuotaLock")
 // ---------------------------------------------------------------------------
 Future<void> abrirPanelVendedor(BuildContext context) async {
   final pin = TextEditingController();
   final ok = await showDialog<bool>(
     context: context,
     builder: (c) => AlertDialog(
-      title: const Text('Panel del vendedor'),
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      title: const Text(
+        'Panel del vendedor',
+        style: TextStyle(color: AppColors.gray900, fontWeight: FontWeight.w800),
+      ),
       content: TextField(
         controller: pin,
         obscureText: true,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'PIN'),
+        style: const TextStyle(color: AppColors.gray900),
+        decoration: const InputDecoration(
+          labelText: 'PIN',
+          prefixIcon: Icon(Icons.lock_outline_rounded),
+        ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-        FilledButton(
+        TextButton(
+          onPressed: () => Navigator.pop(c, false),
+          child: const Text('Cancelar', style: TextStyle(color: AppColors.gray400)),
+        ),
+        ElevatedButton(
           onPressed: () => Navigator.pop(c, pin.text == kPinVendedor),
           child: const Text('Entrar'),
         ),
@@ -350,60 +701,82 @@ Future<void> abrirPanelVendedor(BuildContext context) async {
 
   showModalBottomSheet<void>(
     context: context,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
     builder: (c) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.event),
-            title: const Text('Fijar fecha de vencimiento'),
-            onTap: () async {
-              Navigator.pop(c);
-              final d = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now().add(const Duration(days: 30)),
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 730)),
-              );
-              if (d != null) {
-                await Nativo.fijarVencimiento(
-                  DateTime(d.year, d.month, d.day, 23, 59, 59).millisecondsSinceEpoch,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.event_rounded, color: AppColors.primary),
+              title: const Text('Fijar fecha de vencimiento'),
+              onTap: () async {
+                Navigator.pop(c);
+                final d = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now().add(const Duration(days: 30)),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 730)),
                 );
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.timer),
-            title: const Text('PRUEBA: bloquear en 30 segundos'),
-            onTap: () async {
-              Navigator.pop(c);
-              await Nativo.fijarVencimiento(
-                DateTime.now().millisecondsSinceEpoch + 30000,
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.lock_open, color: Colors.redAccent),
-            title: const Text('Liberar equipo (quitar Device Owner)'),
-            onTap: () async {
-              Navigator.pop(c);
-              final seguro = await showDialog<bool>(
-                context: context,
-                builder: (d) => AlertDialog(
-                  title: const Text('¿Liberar equipo?'),
-                  content: const Text(
-                    'Se quitan todas las restricciones y la app podrá desinstalarse.',
+                if (d != null) {
+                  await Nativo.fijarVencimiento(
+                    DateTime(d.year, d.month, d.day, 23, 59, 59).millisecondsSinceEpoch,
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer_rounded, color: AppColors.warning),
+              title: const Text('PRUEBA: bloquear en 30 segundos'),
+              onTap: () async {
+                Navigator.pop(c);
+                await Nativo.fijarVencimiento(
+                  DateTime.now().millisecondsSinceEpoch + 30000,
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock_open_rounded, color: AppColors.danger),
+              title: const Text('Liberar equipo (quitar Device Owner)'),
+              onTap: () async {
+                Navigator.pop(c);
+                final seguro = await showDialog<bool>(
+                  context: context,
+                  builder: (d) => AlertDialog(
+                    backgroundColor: AppColors.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                    title: const Text(
+                      '¿Liberar equipo?',
+                      style: TextStyle(color: AppColors.gray900, fontWeight: FontWeight.w800),
+                    ),
+                    content: const Text(
+                      'Se quitan todas las restricciones y la app podrá desinstalarse.',
+                      style: TextStyle(color: AppColors.gray400),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(d, false),
+                        child: const Text('No', style: TextStyle(color: AppColors.gray400)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(d, true),
+                        child: const Text('Sí, liberar'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('No')),
-                    FilledButton(onPressed: () => Navigator.pop(d, true), child: const Text('Sí, liberar')),
-                  ],
-                ),
-              );
-              if (seguro == true) await Nativo.liberar();
-            },
-          ),
-        ],
+                );
+                if (seguro == true) await Nativo.liberar();
+              },
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -449,62 +822,116 @@ class _PantallaBloqueoState extends State<PantallaBloqueo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2B0A0A),
-      body: SafeArea(
+      backgroundColor: AppColors.bg,
+      body: FondoMiCel(
+        arriba: const Color(0xFF3A0A14),
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 children: [
-                  const Icon(Icons.lock, size: 88, color: Colors.redAccent),
-                  const SizedBox(height: 16),
+                  const IconoEstado(
+                    icono: Icons.lock_rounded,
+                    color: AppColors.primary,
+                    size: 104,
+                    brillo: true,
+                  ),
+                  const SizedBox(height: 20),
                   const Text(
                     'EQUIPO BLOQUEADO',
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: AppColors.gray900,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tu cuota está vencida. Regulariza tu pago en $kComercio '
                     'para desbloquear este equipo.',
                     textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  Text('ID del equipo: ${widget.estado.deviceId}',
-                      style: const TextStyle(fontSize: 18, letterSpacing: 2)),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _ctrl,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9-]'))],
-                    decoration: const InputDecoration(
-                      labelText: 'Código de desbloqueo',
-                      hintText: '20800-123456',
-                      border: OutlineInputBorder(),
+                    style: const TextStyle(
+                      color: AppColors.gray400,
+                      fontSize: 14,
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _enviando ? null : _desbloquear,
-                      child: Text(_enviando ? 'Verificando...' : 'Desbloquear'),
+                  const SizedBox(height: 22),
+                  TarjetaMiCel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.phone_android_rounded,
+                                color: AppColors.gray400, size: 20),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'ID del equipo',
+                              style: TextStyle(color: AppColors.gray400, fontSize: 12),
+                            ),
+                            const Spacer(),
+                            Text(
+                              widget.estado.deviceId,
+                              style: const TextStyle(
+                                color: AppColors.gray900,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          child: Divider(height: 1),
+                        ),
+                        TextField(
+                          controller: _ctrl,
+                          keyboardType: TextInputType.phone,
+                          textAlign: TextAlign.center,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                          ],
+                          style: const TextStyle(
+                            color: AppColors.gray900,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Código de desbloqueo',
+                            hintText: '20800-123456',
+                            prefixIcon: Icon(Icons.vpn_key_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _enviando ? null : _desbloquear,
+                          child: Text(_enviando ? 'Verificando...' : 'Desbloquear'),
+                        ),
+                        if (_msg != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _msg!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _ok ? AppColors.success : AppColors.warning,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  if (_msg != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _msg!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: _ok ? Colors.greenAccent : Colors.orangeAccent),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.call),
+                      icon: const Icon(Icons.call_rounded),
                       label: Text('Llamar a $kComercio'),
                       onPressed: () => Nativo.marcar(kTelefono),
                     ),
@@ -513,10 +940,21 @@ class _PantallaBloqueoState extends State<PantallaBloqueo> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.emergency),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        side: BorderSide(
+                          color: AppColors.danger.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      icon: const Icon(Icons.emergency_rounded),
                       label: const Text('Llamada de emergencia'),
                       onPressed: () => Nativo.marcar(),
                     ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Protegido por MiCel · CuotaLock',
+                    style: TextStyle(color: AppColors.gray400, fontSize: 11),
                   ),
                 ],
               ),

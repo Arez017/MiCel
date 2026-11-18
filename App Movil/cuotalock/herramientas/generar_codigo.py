@@ -14,7 +14,7 @@ import hashlib
 import hmac
 import sys
 
-SECRET = b"CAMBIA-ESTA-CLAVE-SECRETA"
+SECRET = b"M1C3L"
 FOREVER = 99999
 EPOCH = datetime.date(1970, 1, 1)
 

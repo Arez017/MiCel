@@ -34,7 +34,7 @@ object Policy {
     // ===================== CONFIGURACIÓN =====================
     // Debe ser IDÉNTICA a la de herramientas/generar_codigo.py y a la de Laravel.
     // Prototipo: la clave va dentro del APK. Ver "Limitaciones" en la guía.
-    private const val SECRET = "CAMBIA-ESTA-CLAVE-SECRETA"
+    private const val SECRET = "M1C3L"
     // =========================================================
 
     const val ACTION_CHECK = "com.cuotalock.bloqueo.CHECK"

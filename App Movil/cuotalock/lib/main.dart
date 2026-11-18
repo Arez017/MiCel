@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,7 +9,7 @@ import 'app_theme.dart';
 // ================= CONFIGURACIÓN (edita estos 3 valores) =================
 const String kComercio = 'MiCel';
 const String kTelefono = '70000000';
-const String kPinVendedor = '2468'; // PIN del panel del vendedor (mantener pulsado el logo)
+const String kPinVendedor = '2468'; // PIN del panel de PRUEBAS (solo builds debug, ver abrirPanelVendedor)
 // =========================================================================
 
 const MethodChannel _canal = MethodChannel('cuotalock/native');
@@ -462,7 +463,8 @@ class PantallaInicio extends StatelessWidget {
             // Encabezado con la marca (mantener pulsado = panel del vendedor)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onLongPress: () => abrirPanelVendedor(context),
+              // Panel de pruebas: no existe en el APK de producción (el PIN está en el repo público)
+              onLongPress: kReleaseMode ? null : () => abrirPanelVendedor(context),
               child: Row(
                 children: [
                   const MarcaMiCel(size: 44),
@@ -662,6 +664,7 @@ class PantallaInicio extends StatelessWidget {
 // Panel del vendedor (mantener pulsado el logo / título "CuotaLock")
 // ---------------------------------------------------------------------------
 Future<void> abrirPanelVendedor(BuildContext context) async {
+  if (kReleaseMode) return; // sin atajos para liberar/fijar fecha en producción
   final pin = TextEditingController();
   final ok = await showDialog<bool>(
     context: context,

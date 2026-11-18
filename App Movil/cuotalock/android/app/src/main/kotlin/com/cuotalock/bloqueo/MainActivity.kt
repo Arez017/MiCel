@@ -24,7 +24,13 @@ class MainActivity : FlutterActivity() {
                             Policy.evaluar(this, false)
                             result.success(Policy.status(this))
                         }
+                        // setDue y release saltan la validación del código: solo en builds de prueba.
+                        // En producción se usa el código del panel web (99999-XXXXXX libera el equipo).
                         "setDue" -> {
+                            if (!BuildConfig.DEBUG) {
+                                result.error("DENEGADO", "No disponible en esta versión.", null)
+                                return@setMethodCallHandler
+                            }
                             val millis = (call.argument<Number>("millis") ?: 0).toLong()
                             Policy.setDue(this, millis)
                             result.success(null)
@@ -49,6 +55,10 @@ class MainActivity : FlutterActivity() {
                             result.success(null)
                         }
                         "release" -> {
+                            if (!BuildConfig.DEBUG) {
+                                result.error("DENEGADO", "No disponible en esta versión.", null)
+                                return@setMethodCallHandler
+                            }
                             Policy.release(this)
                             result.success(null)
                         }

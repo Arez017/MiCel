@@ -108,12 +108,12 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Asistente MiCEL',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-            Text('Demo IA · taller',
+            Text('Órdenes, coins, garantía y taller',
                 style: TextStyle(fontSize: 11, color: AppColors.gray400)),
           ],
         ),
@@ -127,7 +127,7 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: _msgs.length + (_sending ? 1 : 0),
               itemBuilder: (ctx, i) {
                 if (_sending && i == _msgs.length) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Row(
                       children: [
@@ -159,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           label: Text(s, style: const TextStyle(fontSize: 12)),
                           onPressed: _sending ? null : () => _send(s),
                           backgroundColor: AppColors.surface2,
-                          side: const BorderSide(color: AppColors.border),
+                          side: BorderSide(color: AppColors.border),
                         ),
                       ))
                   .toList(),
@@ -172,7 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
               top: 8,
               bottom: MediaQuery.of(context).padding.bottom + 8,
             ),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.surface,
               border: Border(top: BorderSide(color: AppColors.border)),
             ),

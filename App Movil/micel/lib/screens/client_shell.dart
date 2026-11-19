@@ -3,6 +3,7 @@ import '../app_theme.dart';
 import 'home_screen.dart';
 import 'coins_screen.dart';
 import 'tracking_screen.dart';
+import 'chat_screen.dart';
 import 'profile_screen.dart';
 
 class ClientShell extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ClientShellState extends State<ClientShell> {
     HomeScreen(),
     CoinsScreen(),
     TrackingScreen(),
+    ChatScreen(),
     ProfileScreen(),
   ];
 
@@ -27,7 +29,7 @@ class _ClientShellState extends State<ClientShell> {
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.border)),
           color: AppColors.surface,
         ),
@@ -50,6 +52,10 @@ class _ClientShellState extends State<ClientShell> {
             BottomNavigationBarItem(
               icon: Icon(Icons.qr_code_scanner_rounded),
               label: 'Seguimiento',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.smart_toy_rounded),
+              label: 'Asistente',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),

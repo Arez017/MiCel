@@ -26,18 +26,18 @@ class CommissionScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('TOTAL A PAGAR ESTE MES', style: TextStyle(fontSize: 11, color: AppColors.gray400, letterSpacing: .6)),
+                Text('TOTAL A PAGAR ESTE MES', style: TextStyle(fontSize: 11, color: AppColors.gray400, letterSpacing: .6)),
                 const SizedBox(height: 6),
                 Text('Bs ${totalGeneral.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.accent)),
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.accent)),
                 const SizedBox(height: 4),
-                const Text('15% por orden completada (estado "Listo")',
+                Text('15% por orden completada (estado "Listo")',
                     style: TextStyle(fontSize: 11.5, color: AppColors.gray500)),
               ],
             ),
           ),
           const SizedBox(height: 22),
-          const Text('Comisión por técnico',
+          Text('Comisión por técnico',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.gray800)),
           const SizedBox(height: 12),
           ...tecnicos.map((t) {
@@ -52,15 +52,15 @@ class CommissionScreen extends StatelessWidget {
                 childrenPadding: const EdgeInsets.only(left: 14, right: 14, bottom: 10),
                 leading: CircleAvatar(
                   backgroundColor: AppColors.primaryLight,
-                  child: Text(iniciales, style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text(iniciales, style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
-                title: Text(t.nombre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gray800)),
+                title: Text(t.nombre, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gray800)),
                 subtitle: Text('${ordenesListas.length} órdenes completadas',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.gray400)),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.gray400)),
                 trailing: Text('Bs ${comision.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                 children: ordenesListas.isEmpty
-                    ? [const Padding(
+                    ? [Padding(
                         padding: EdgeInsets.only(bottom: 6),
                         child: Align(
                           alignment: Alignment.centerLeft,
@@ -75,10 +75,10 @@ class CommissionScreen extends StatelessWidget {
                                 children: [
                                   Expanded(
                                     child: Text('${o.codigo} · ${o.servicio}',
-                                        style: const TextStyle(fontSize: 12, color: AppColors.gray700)),
+                                        style: TextStyle(fontSize: 12, color: AppColors.gray700)),
                                   ),
                                   Text('Bs ${o.comisionTecnico.toStringAsFixed(2)}',
-                                      style: const TextStyle(fontSize: 12, color: AppColors.gray500)),
+                                      style: TextStyle(fontSize: 12, color: AppColors.gray500)),
                                 ],
                               ),
                             ))

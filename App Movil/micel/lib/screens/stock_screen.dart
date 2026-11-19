@@ -17,7 +17,7 @@ class StockScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text('${mockStock.length} repuestos en catálogo',
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.gray500)),
+                    style: TextStyle(fontSize: 12.5, color: AppColors.gray500)),
               ),
               TextButton.icon(
                 onPressed: () {},
@@ -31,7 +31,7 @@ class StockScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 10, bottom: 8),
               child: Text(cat.toUpperCase(),
-                  style: const TextStyle(fontSize: 11, color: AppColors.gray400, letterSpacing: .6, fontWeight: FontWeight.w600)),
+                  style: TextStyle(fontSize: 11, color: AppColors.gray400, letterSpacing: .6, fontWeight: FontWeight.w600)),
             ),
             ...mockStock.where((s) => s.categoria == cat).map((item) => _StockTile(item: item)),
           ],
@@ -71,10 +71,10 @@ class _StockTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.id,
-                        style: const TextStyle(fontSize: 10, color: AppColors.gray400, fontFamily: 'monospace')),
+                        style: TextStyle(fontSize: 10, color: AppColors.gray400, fontFamily: 'monospace')),
                     const SizedBox(height: 4),
                     Text(item.nombre,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gray800)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gray800)),
                     const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(3),
@@ -94,7 +94,7 @@ class _StockTile extends StatelessWidget {
                 children: [
                   Text('${item.cantidad}',
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: barColor)),
-                  Text('mín. ${item.minimo}', style: const TextStyle(fontSize: 10.5, color: AppColors.gray400)),
+                  Text('mín. ${item.minimo}', style: TextStyle(fontSize: 10.5, color: AppColors.gray400)),
                 ],
               ),
             ],

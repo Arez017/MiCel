@@ -45,10 +45,10 @@ class _AdminShellState extends State<AdminShell> {
               child: Row(
                 children: [
                   Text(user?.nombre ?? 'Admin',
-                      style: const TextStyle(fontSize: 12, color: AppColors.gray500)),
+                      style: TextStyle(fontSize: 12, color: AppColors.gray500)),
                   IconButton(
                     onPressed: _logout,
-                    icon: const Icon(Icons.logout_rounded, size: 20, color: AppColors.danger),
+                    icon: Icon(Icons.logout_rounded, size: 20, color: AppColors.danger),
                     tooltip: 'Cerrar sesión',
                   ),
                 ],

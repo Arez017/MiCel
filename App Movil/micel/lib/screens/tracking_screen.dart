@@ -167,7 +167,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -185,7 +185,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   IconButton(
                     tooltip: 'Actualizar',
                     onPressed: _loading ? null : _cargar,
-                    icon: const Icon(Icons.refresh_rounded, color: AppColors.gray400),
+                    icon: Icon(Icons.refresh_rounded, color: AppColors.gray400),
                   ),
                 ],
               ),
@@ -193,7 +193,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
               // ===== LISTA AUTOMÁTICA =====
               if (_loading)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 48),
                   child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                 )
@@ -210,7 +210,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   _ordenes.length == 1
                       ? '1 equipo en seguimiento'
                       : '${_ordenes.length} equipos en seguimiento',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, color: AppColors.gray400, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
@@ -231,7 +231,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   _mostrarBusquedaManual
                       ? 'Ocultar búsqueda por código'
                       : 'Buscar otro código (opcional)',
-                  style: const TextStyle(color: AppColors.gray400, fontSize: 13),
+                  style: TextStyle(color: AppColors.gray400, fontSize: 13),
                 ),
               ),
               if (_mostrarBusquedaManual) ...[
@@ -239,7 +239,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 TextField(
                   controller: _codeCtrl,
                   textCapitalization: TextCapitalization.characters,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.gray900, fontWeight: FontWeight.w600),
                   decoration: const InputDecoration(
                     hintText: 'Ej: OS-0041 — busca al escribir',
@@ -247,7 +247,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   ),
                 ),
                 if (_loadingBusqueda)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
                     child: Center(
                         child: SizedBox(
@@ -260,7 +260,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(_errorBusqueda!,
-                        style: const TextStyle(color: Color(0xFFFF8A8A), fontSize: 13)),
+                        style: TextStyle(color: AppColors.danger, fontSize: 13)),
                   ),
                 if (_busquedaExtra != null) ...[
                   const SizedBox(height: 12),
@@ -327,7 +327,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.phone_iphone_rounded,
+                    child: Icon(Icons.phone_iphone_rounded,
                         color: AppColors.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
@@ -336,7 +336,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(code.isEmpty ? 'Orden' : code,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 15,
                                 color: AppColors.primary)),
@@ -344,7 +344,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         Text('${o['device'] ?? '—'} · ${o['service'] ?? ''}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.gray400)),
+                            style: TextStyle(fontSize: 12, color: AppColors.gray400)),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -370,7 +370,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             ),
           ),
           if (expanded) ...[
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
               child: Column(
@@ -384,7 +384,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   if (tecnicoName.isNotEmpty) _row('Técnico', tecnicoName),
                   if (o['monto'] != null) _row('Monto', 'Bs ${o['monto']}'),
                   const SizedBox(height: 14),
-                  const Text('Código QR',
+                  Text('Código QR',
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -416,9 +416,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
+                      icon: Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
                       label: Text('Copiar $code',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppColors.primary, fontWeight: FontWeight.w600)),
                     ),
                   ),
@@ -439,10 +439,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
         children: [
           SizedBox(
               width: 90,
-              child: Text(k, style: const TextStyle(color: AppColors.gray400, fontSize: 13))),
+              child: Text(k, style: TextStyle(color: AppColors.gray400, fontSize: 13))),
           Expanded(
               child: Text(v,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppColors.gray900))),

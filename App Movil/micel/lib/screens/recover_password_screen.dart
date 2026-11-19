@@ -93,7 +93,7 @@ class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
+          Text(
             'Ingresa el usuario de la app y el teléfono registrado en el taller. '
             'Si coinciden, podrás definir una nueva contraseña.',
             style: TextStyle(color: AppColors.gray400, height: 1.4, fontSize: 13),

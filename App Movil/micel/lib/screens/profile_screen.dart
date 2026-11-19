@@ -69,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Editar perfil',
+                    Text('Editar perfil',
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Cambiar contraseña',
+                    Text('Cambiar contraseña',
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -315,7 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text('Mi perfil',
                         style: TextStyle(
                             fontSize: 22,
@@ -352,25 +352,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       child: Text(initials,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
                               color: AppColors.primary)),
                     ),
                     const SizedBox(height: 14),
                     Text(ClientSession.nombre,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.gray900)),
                     if (ClientSession.username.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text('@${ClientSession.username}',
-                          style: const TextStyle(color: AppColors.gray400, fontSize: 13)),
+                          style: TextStyle(color: AppColors.gray400, fontSize: 13)),
                     ],
                     if (ClientSession.esVip) ...[
                       const SizedBox(height: 6),
-                      const Text('⭐ Cliente VIP',
+                      Text('⭐ Cliente VIP',
                           style: TextStyle(
                               color: AppColors.warning, fontWeight: FontWeight.w600)),
                     ],
@@ -398,13 +398,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: 'Actualiza tu clave de acceso',
                 onTap: _openChangePassword,
               ),
+              _modoClaroTile(),
               const SizedBox(height: 24),
               SizedBox(
                 height: 48,
                 child: OutlinedButton.icon(
                   onPressed: _logout,
-                  icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
-                  label: const Text('Cerrar sesión',
+                  icon: Icon(Icons.logout_rounded, color: AppColors.danger),
+                  label: Text('Cerrar sesión',
                       style: TextStyle(
                           color: AppColors.danger, fontWeight: FontWeight.w600)),
                   style: OutlinedButton.styleFrom(
@@ -456,21 +457,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
                               color: AppColors.gray900)),
                       Text(subtitle,
-                          style: const TextStyle(fontSize: 12, color: AppColors.gray400)),
+                          style: TextStyle(fontSize: 12, color: AppColors.gray400)),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: AppColors.gray400),
+                Icon(Icons.chevron_right_rounded, color: AppColors.gray400),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// Interruptor de modo claro / oscuro (se recuerda al cerrar la app).
+  Widget _modoClaroTile() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: ModoTema.claro,
+      builder: (context, claro, _) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Material(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: () => ModoTema.cambiar(!claro),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        claro ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Modo claro',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppColors.gray900)),
+                          Text(claro ? 'Activado' : 'Desactivado (modo oscuro)',
+                              style: TextStyle(fontSize: 12, color: AppColors.gray400)),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: claro,
+                      onChanged: ModoTema.cambiar,
+                      activeTrackColor: AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -483,11 +548,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(width: 10),
           SizedBox(
             width: 80,
-            child: Text(k, style: const TextStyle(color: AppColors.gray400, fontSize: 13)),
+            child: Text(k, style: TextStyle(color: AppColors.gray400, fontSize: 13)),
           ),
           Expanded(
             child: Text(v.isEmpty ? '—' : v,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gray900)),
           ),
         ],

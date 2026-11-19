@@ -19,12 +19,14 @@ class Estado {
   final bool locked;
   final int due;
   final String deviceId;
+  final String linkKey; // clave de vinculación: vacía cuando el equipo ya usó un código
 
   const Estado({
     required this.owner,
     required this.locked,
     required this.due,
     required this.deviceId,
+    this.linkKey = '',
   });
 
   factory Estado.desde(Map<String, dynamic> m) => Estado(
@@ -32,6 +34,7 @@ class Estado {
         locked: m['locked'] == true,
         due: (m['due'] as num).toInt(),
         deviceId: m['deviceId'] as String,
+        linkKey: (m['linkKey'] as String?) ?? '',
       );
 
   DateTime? get vence =>
@@ -578,6 +581,39 @@ class PantallaInicio extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Clave de vinculación: solo aparece hasta que se usa el primer código
+            if (estado.linkKey.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              TarjetaMiCel(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Clave de vinculación (solo para el vendedor)',
+                      style: TextStyle(color: AppColors.gray400, fontSize: 12),
+                    ),
+                    const SizedBox(height: 2),
+                    SelectableText(
+                      estado.linkKey,
+                      style: const TextStyle(
+                        color: AppColors.gray900,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'monospace',
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Escríbela en la web junto con el ID. Desaparece al ingresar el código de activación.',
+                      style: TextStyle(color: AppColors.gray400, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
 
             SizedBox(
@@ -637,7 +673,7 @@ class PantallaInicio extends StatelessWidget {
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9-]'))],
           style: const TextStyle(color: AppColors.gray900, letterSpacing: 1.5),
-          decoration: const InputDecoration(hintText: '20800-123456'),
+          decoration: const InputDecoration(hintText: '20800-0001-123456'),
         ),
         actions: [
           TextButton(
@@ -907,7 +943,7 @@ class _PantallaBloqueoState extends State<PantallaBloqueo> {
                           ),
                           decoration: const InputDecoration(
                             labelText: 'Código de desbloqueo',
-                            hintText: '20800-123456',
+                            hintText: '20800-0001-123456',
                             prefixIcon: Icon(Icons.vpn_key_rounded),
                           ),
                         ),

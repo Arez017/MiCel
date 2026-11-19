@@ -14,6 +14,7 @@ import android.os.UserManager
 import android.provider.Settings
 import android.telecom.TelecomManager
 import java.security.MessageDigest
+import java.security.SecureRandom
 import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
@@ -23,25 +24,34 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * Toda la lógica de bloqueo vive aquí.
  *
- * Esquema de códigos (offline):
- *   código = DDDDD-MMMMMM
+ * Esquema de códigos v3 (offline):
+ *   código = DDDDD-NNNN-MMMMMM
  *   DDDDD  = nuevo vencimiento, en días desde 1970-01-01 (fecha local)
- *   MMMMMM = 6 dígitos de HMAC-SHA256(SECRET, "<ID_EQUIPO>:<DDDDD>")
+ *   NNNN   = número de emisión: solo se acepta uno MAYOR al último usado (un solo uso)
+ *   MMMMMM = 6 dígitos de HMAC-SHA256(CLAVE[0..15], "CL3:<ID_EQUIPO>:<DDDDD>:<NNNN>")
  *   DDDDD = 99999 -> cuotas liquidadas: libera el equipo
+ *
+ * CLAVE: la genera ESTE celular al instalarse (16 caracteres base32, el último es
+ * verificador) y la muestra solo hasta que se usa el primer código. El vendedor la
+ * escribe en la web al vincular. No hay clave global dentro del APK: decompilar la
+ * app o leer GitHub no sirve para fabricar códigos, y un código de un equipo no
+ * funciona en otro.
  */
 object Policy {
 
-    // ===================== CONFIGURACIÓN =====================
-    // Debe ser IDÉNTICA a la de herramientas/generar_codigo.py y a la de Laravel.
-    // Prototipo: la clave va dentro del APK. Ver "Limitaciones" en la guía.
-    private const val SECRET = "M1C3L"
-    // =========================================================
 
     const val ACTION_CHECK = "com.cuotalock.bloqueo.CHECK"
 
     private const val PREFS = "cuotalock"
     private const val KEY_DUE = "due_millis"
     private const val KEY_LOCKED = "locked"
+    private const val KEY_CLAVE = "clave_vinculacion"
+    private const val KEY_SEQ = "ultima_emision"
+    private const val KEY_FALLOS = "intentos_fallidos"
+    private const val KEY_ESPERA = "espera_hasta"
+    private const val BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+    private const val MAX_SEQ = 9_999L
+    private const val INTENTOS_LIBRES = 5
     private const val DAY_MS = 86_400_000L
     private const val FOREVER = 99_999L
 
@@ -69,11 +79,37 @@ object Policy {
         return raw.uppercase().padStart(8, '0').takeLast(8)
     }
 
+    // ---------- Clave de vinculación (propia de este equipo) ----------
+
+    private fun verificador(quince: String): Char {
+        var suma = 0
+        for (i in 0 until 15) suma += (i + 1) * BASE32.indexOf(quince[i])
+        return BASE32[suma % 32]
+    }
+
+    /** Devuelve la clave del equipo; la crea (aleatoria) la primera vez. */
+    private fun clave(c: Context): String {
+        val guardada = prefs(c).getString(KEY_CLAVE, null)
+        if (guardada != null) return guardada
+        val rnd = SecureRandom()
+        val quince = String(CharArray(15) { BASE32[rnd.nextInt(32)] })
+        val nueva = quince + verificador(quince)
+        prefs(c).edit().putString(KEY_CLAVE, nueva).commit()
+        return nueva
+    }
+
+    private fun ultimaEmision(c: Context): Long = prefs(c).getLong(KEY_SEQ, 0L)
+
+    /** La clave solo se muestra mientras el equipo no haya usado ningún código. */
+    private fun claveVisible(c: Context): String =
+        if (ultimaEmision(c) == 0L) clave(c).chunked(4).joinToString("-") else ""
+
     fun status(c: Context): Map<String, Any> = mapOf(
         "owner" to isOwner(c),
         "locked" to isLocked(c),
         "due" to dueMillis(c),
-        "deviceId" to deviceId(c)
+        "deviceId" to deviceId(c),
+        "linkKey" to claveVisible(c)
     )
 
     // ---------- Configuración inicial como Device Owner ----------
@@ -200,10 +236,10 @@ object Policy {
 
     // ---------- Códigos de pago / desbloqueo ----------
 
-    private fun mac(deviceId: String, days: Long): String {
+    private fun mac(clave: String, deviceId: String, days: Long, seq: Long): String {
         val m = Mac.getInstance("HmacSHA256")
-        m.init(SecretKeySpec(SECRET.toByteArray(Charsets.UTF_8), "HmacSHA256"))
-        val h = m.doFinal("$deviceId:$days".toByteArray(Charsets.UTF_8))
+        m.init(SecretKeySpec(clave.substring(0, 15).toByteArray(Charsets.UTF_8), "HmacSHA256"))
+        val h = m.doFinal("CL3:$deviceId:$days:$seq".toByteArray(Charsets.UTF_8))
         val n = ((h[0].toInt() and 0x7f) shl 24) or
                 ((h[1].toInt() and 0xff) shl 16) or
                 ((h[2].toInt() and 0xff) shl 8) or
@@ -211,28 +247,58 @@ object Policy {
         return (n % 1_000_000).toString().padStart(6, '0')
     }
 
+    /** Freno contra probar códigos al azar: tras 5 fallos, espera 1, 2, 4... hasta 60 min. */
+    private fun registrarFallo(c: Context): String {
+        val fallos = prefs(c).getInt(KEY_FALLOS, 0) + 1
+        val e = prefs(c).edit().putInt(KEY_FALLOS, fallos)
+        if (fallos >= INTENTOS_LIBRES) {
+            val minutos = minOf(60L, 1L shl minOf(fallos - INTENTOS_LIBRES, 6))
+            e.putLong(KEY_ESPERA, System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(minutos))
+            e.commit()
+            return "Código incorrecto. Demasiados intentos: espera $minutos min."
+        }
+        e.commit()
+        return "Código incorrecto para este equipo."
+    }
+
     fun submitCode(c: Context, raw: String): Pair<Boolean, String> {
         if (!isOwner(c)) return Pair(false, "El equipo no está configurado.")
-        val partes = raw.trim().split("-")
-        if (partes.size != 2) return Pair(false, "Formato inválido. Ejemplo: 20800-123456")
-        val days = partes[0].toLongOrNull() ?: return Pair(false, "Formato inválido.")
 
-        val esperado = mac(deviceId(c), days)
-        if (!MessageDigest.isEqual(esperado.toByteArray(), partes[1].toByteArray())) {
-            return Pair(false, "Código incorrecto para este equipo.")
+        val espera = prefs(c).getLong(KEY_ESPERA, 0L) - System.currentTimeMillis()
+        if (espera > 0) {
+            val min = TimeUnit.MILLISECONDS.toMinutes(espera) + 1
+            return Pair(false, "Demasiados intentos. Vuelve a probar en $min min.")
         }
 
+        val partes = raw.trim().split("-")
+        if (partes.size != 3) return Pair(false, "Formato inválido. Ejemplo: 20800-0001-123456")
+        val days = partes[0].toLongOrNull()
+        val seq = partes[1].toLongOrNull()
+        if (days == null || seq == null || partes[2].length != 6) return Pair(false, "Formato inválido.")
+        if (seq < 1 || seq > MAX_SEQ) return Pair(false, "Formato inválido.")
+
+        val esperado = mac(clave(c), deviceId(c), days, seq)
+        if (!MessageDigest.isEqual(esperado.toByteArray(), partes[2].toByteArray())) {
+            return Pair(false, registrarFallo(c))
+        }
+
+        // Cada código sirve una sola vez: el número de emisión tiene que ser nuevo
+        if (seq <= ultimaEmision(c)) return Pair(false, "Este código ya fue usado o fue reemplazado por uno más nuevo.")
+
         if (days == FOREVER) {
-            release(c)
+            release(c) // borra también la clave: si se reinstala, se vincula con una nueva
             return Pair(true, "Cuotas liquidadas. El equipo fue liberado.")
         }
 
         val hoy = daysOf(System.currentTimeMillis())
-        val vencimientoActual = if (dueMillis(c) > 0) daysOf(dueMillis(c)) else -1L
-        if (days <= vencimientoActual) return Pair(false, "Este código ya fue usado o está vencido.")
         if (days < hoy) return Pair(false, "El código corresponde a una fecha pasada.")
         if (days > hoy + 400) return Pair(false, "Código fuera de rango.")
 
+        prefs(c).edit()
+            .putLong(KEY_SEQ, seq)
+            .putInt(KEY_FALLOS, 0)
+            .remove(KEY_ESPERA)
+            .commit()
         val nuevo = endOfDayMillis(days)
         setDue(c, nuevo)
         return Pair(true, "Pago registrado. Nuevo vencimiento: ${fecha(nuevo)}")

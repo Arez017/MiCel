@@ -41,11 +41,11 @@ class _CoinsScreenState extends State<CoinsScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(0.9, -0.9),
             radius: 1.1,
-            colors: [Color(0x33FF1440), Color(0xFF0A0A0B)],
+            colors: [Color(0x33FF1440), AppColors.bg],
           ),
         ),
         child: SafeArea(
@@ -55,11 +55,11 @@ class _CoinsScreenState extends State<CoinsScreen> {
             child: ListView(
               padding: const EdgeInsets.all(18),
               children: [
-                const Text('MiCel Coins',
+                Text('MiCel Coins',
                     style: TextStyle(
                         fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.gray900)),
                 const SizedBox(height: 6),
-                const Text('Acumula al pagar servicios y canjea descuentos',
+                Text('Acumula al pagar servicios y canjea descuentos',
                     style: TextStyle(fontSize: 13, color: AppColors.gray400)),
                 const SizedBox(height: 18),
 
@@ -136,7 +136,7 @@ class _CoinsScreenState extends State<CoinsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('¿Cómo funcionan?',
+                      Text('¿Cómo funcionan?',
                           style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
@@ -153,12 +153,12 @@ class _CoinsScreenState extends State<CoinsScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                const Text('Cupones disponibles',
+                Text('Cupones disponibles',
                     style: TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.gray900)),
                 const SizedBox(height: 12),
                 if (_loading)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                   )
@@ -170,7 +170,7 @@ class _CoinsScreenState extends State<CoinsScreen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: const Text(
+                    child: Text(
                         'No hay cupones activos por ahora.\nSigue acumulando coins con tus servicios.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.gray400, fontSize: 13, height: 1.4)),
@@ -197,7 +197,7 @@ class _CoinsScreenState extends State<CoinsScreen> {
                               ),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(Icons.local_offer_rounded,
+                            child: Icon(Icons.local_offer_rounded,
                                 color: AppColors.primary),
                           ),
                           const SizedBox(width: 12),
@@ -207,16 +207,16 @@ class _CoinsScreenState extends State<CoinsScreen> {
                               children: [
                                 Text(
                                     '${m['titulo'] ?? m['nombre'] ?? m['codigo'] ?? 'Cupón'}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 14,
                                         color: AppColors.gray900)),
                                 if ((m['descripcion'] ?? '').toString().isNotEmpty)
                                   Text('${m['descripcion']}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 12, color: AppColors.gray400)),
                                 if (m['solo_vip'] == true)
-                                  const Padding(
+                                  Padding(
                                     padding: EdgeInsets.only(top: 4),
                                     child: Text('Solo VIP',
                                         style: TextStyle(
@@ -249,7 +249,7 @@ class _CoinsScreenState extends State<CoinsScreen> {
           const SizedBox(width: 10),
           Expanded(
               child: Text(text,
-                  style: const TextStyle(fontSize: 13, color: AppColors.gray800, height: 1.3))),
+                  style: TextStyle(fontSize: 13, color: AppColors.gray800, height: 1.3))),
         ],
       ),
     );

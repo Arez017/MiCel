@@ -41,10 +41,10 @@ class _TecnicoShellState extends State<TecnicoShell> {
             padding: const EdgeInsets.only(right: 4),
             child: Row(
               children: [
-                Text(user?.nombre ?? 'Técnico', style: const TextStyle(fontSize: 12, color: AppColors.gray500)),
+                Text(user?.nombre ?? 'Técnico', style: TextStyle(fontSize: 12, color: AppColors.gray500)),
                 IconButton(
                   onPressed: _logout,
-                  icon: const Icon(Icons.logout_rounded, size: 20, color: AppColors.danger),
+                  icon: Icon(Icons.logout_rounded, size: 20, color: AppColors.danger),
                   tooltip: 'Cerrar sesión',
                 ),
               ],

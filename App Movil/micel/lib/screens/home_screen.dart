@@ -91,11 +91,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(-0.8, -1.0),
             radius: 1.2,
-            colors: [Color(0x28FF1440), Color(0xFF0A0A0B)],
+            colors: [Color(0x28FF1440), AppColors.bg],
           ),
         ),
         child: SafeArea(
@@ -118,11 +118,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             children: [
                               Text(
                                 _saludo(),
-                                style: const TextStyle(fontSize: 13, color: AppColors.gray400),
+                                style: TextStyle(fontSize: 13, color: AppColors.gray400),
                               ),
                               const SizedBox(height: 4),
                               Text('Hola, $nombre 👋',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.w900,
                                       color: AppColors.gray900,
@@ -211,16 +211,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 26),
 
-                const Text('Mis órdenes',
+                Text('Mis órdenes',
                     style: TextStyle(
                         fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.gray900)),
                 const SizedBox(height: 4),
-                const Text('Desliza hacia abajo para actualizar',
+                Text('Desliza hacia abajo para actualizar',
                     style: TextStyle(fontSize: 12, color: AppColors.gray400)),
                 const SizedBox(height: 12),
 
                 if (_loading)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(40),
                     child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                   )
@@ -274,13 +274,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('${m['code'] ?? ''} · ${m['device'] ?? ''}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 14,
                                           color: AppColors.gray900)),
                                   const SizedBox(height: 3),
                                   Text('${m['service'] ?? '—'}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 12, color: AppColors.gray400)),
                                   const SizedBox(height: 8),
                                   Container(
@@ -304,11 +304,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text('Bs ${m['monto']}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 15,
                                           color: AppColors.gray900)),
-                                  const Text('monto',
+                                  Text('monto',
                                       style: TextStyle(
                                           fontSize: 10, color: AppColors.gray400)),
                                 ],
@@ -472,11 +472,11 @@ class _MiniCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: AppColors.gray400)),
+                Text(label, style: TextStyle(fontSize: 11, color: AppColors.gray400)),
                 Text(value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.gray900)),
               ],
             ),

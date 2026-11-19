@@ -32,7 +32,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 22),
-          const Text('Órdenes recientes',
+          Text('Órdenes recientes',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.gray800)),
           const SizedBox(height: 12),
           ...mockOrders.reversed.take(4).map((o) => Card(
@@ -45,10 +45,10 @@ class AdminDashboardScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('${o.equipo} · ${o.servicio}',
-                                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.gray800)),
+                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.gray800)),
                             const SizedBox(height: 2),
                             Text('${o.cliente} · Técnico: ${o.tecnico}',
-                                style: const TextStyle(fontSize: 11, color: AppColors.gray400)),
+                                style: TextStyle(fontSize: 11, color: AppColors.gray400)),
                           ],
                         ),
                       ),
@@ -79,7 +79,7 @@ class _MetricCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 10.5, color: AppColors.gray500, fontWeight: FontWeight.w500, letterSpacing: 0.4)),
             const SizedBox(height: 6),
             Text(value,

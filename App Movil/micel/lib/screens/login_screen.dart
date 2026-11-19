@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text(
+        title: Text(
           'Servidor API',
           style: TextStyle(color: AppColors.gray900, fontWeight: FontWeight.w800),
         ),
@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Pon la IP de tu laptop en esta red.\n'
                 'Ej: http://192.168.43.15:8000/api\n\n'
                 'No hace falta generar otro APK: se guarda en el celular.',
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: ctrl,
-                style: const TextStyle(color: AppColors.gray900, fontSize: 14),
+                style: TextStyle(color: AppColors.gray900, fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'URL base',
                   hintText: 'http://192.168.x.x:8000/api',
@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: AppColors.gray400)),
+            child: Text('Cancelar', style: TextStyle(color: AppColors.gray400)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -117,11 +117,13 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF2A0A12), Color(0xFF0D0D0F)],
+            colors: AppColors.claro
+                ? const [Color(0xFFFFE4EA), Color(0xFFE8EEF6)]
+                : const [Color(0xFF2A0A12), Color(0xFF0D0D0F)],
           ),
         ),
         child: SafeArea(
@@ -165,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'MiCel Cliente',
                         style: TextStyle(
                           color: AppColors.gray900,
@@ -174,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'Seguimiento de tu equipo y beneficios',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.gray400, fontSize: 13),
@@ -183,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         ApiConfig.baseUrl,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.gray400,
                           fontSize: 11,
                         ),
@@ -192,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _userCtrl,
                         textInputAction: TextInputAction.next,
-                        style: const TextStyle(color: AppColors.gray900),
+                        style: TextStyle(color: AppColors.gray900),
                         decoration: const InputDecoration(
                           labelText: 'Usuario',
                           prefixIcon: Icon(Icons.person_outline_rounded),
@@ -203,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passCtrl,
                         obscureText: _obscure,
                         onSubmitted: (_) => _doLogin(),
-                        style: const TextStyle(color: AppColors.gray900),
+                        style: TextStyle(color: AppColors.gray900),
                         decoration: InputDecoration(
                           labelText: 'Contraseña',
                           prefixIcon: const Icon(Icons.lock_outline_rounded),
@@ -229,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             '¿Olvidaste tu contraseña?',
                             style: TextStyle(
                               color: AppColors.primary,
@@ -254,8 +256,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(
                             _error!,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFFF8A8A),
+                            style: TextStyle(
+                              color: AppColors.danger,
                               fontSize: 13,
                               height: 1.35,
                             ),
@@ -283,12 +285,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 12),
                       TextButton.icon(
                         onPressed: _abrirConfigServidor,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.settings_ethernet_rounded,
                           size: 16,
                           color: AppColors.gray400,
                         ),
-                        label: const Text(
+                        label: Text(
                           'Cambiar servidor / IP',
                           style: TextStyle(fontSize: 12, color: AppColors.gray400),
                         ),

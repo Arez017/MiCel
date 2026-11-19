@@ -11,7 +11,7 @@ class MisOrdenesScreen extends StatelessWidget {
     final misOrdenes = mockOrders.where((o) => o.tecnico == nombre).toList();
 
     if (misOrdenes.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('No tienes órdenes asignadas por ahora.', style: TextStyle(color: AppColors.gray500)),
       );
     }
@@ -34,10 +34,10 @@ class MisOrdenesScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(o.codigo,
-                                style: const TextStyle(fontSize: 11, color: AppColors.gray400, fontFamily: 'monospace')),
+                                style: TextStyle(fontSize: 11, color: AppColors.gray400, fontFamily: 'monospace')),
                             const SizedBox(height: 3),
                             Text('${o.equipo} · ${o.servicio}',
-                                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.gray900)),
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.gray900)),
                           ],
                         ),
                       ),
@@ -47,18 +47,18 @@ class MisOrdenesScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.person_outline_rounded, size: 15, color: AppColors.gray400),
+                      Icon(Icons.person_outline_rounded, size: 15, color: AppColors.gray400),
                       const SizedBox(width: 4),
-                      Text(o.cliente, style: const TextStyle(fontSize: 12, color: AppColors.gray600)),
+                      Text(o.cliente, style: TextStyle(fontSize: 12, color: AppColors.gray600)),
                       const Spacer(),
                       Text('Bs ${o.precio.toStringAsFixed(0)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.gray800)),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.gray800)),
                     ],
                   ),
                   if (o.estado == 'Listo') ...[
                     const SizedBox(height: 6),
                     Text('Tu comisión: Bs ${o.comisionTecnico.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.success, fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 11.5, color: AppColors.success, fontWeight: FontWeight.w600)),
                   ],
                 ],
               ),

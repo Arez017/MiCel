@@ -136,6 +136,16 @@ object Policy {
         } else if (Build.VERSION.SDK_INT >= 23) {
             d.setAutoTimeRequired(a, true)
         }
+        // Android 13+: como administradora del equipo, se da a sí misma el permiso
+        // de notificaciones para el recordatorio de cuotas.
+        if (Build.VERSION.SDK_INT >= 33) {
+            try {
+                d.setPermissionGrantState(
+                    a, c.packageName, "android.permission.POST_NOTIFICATIONS",
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                )
+            } catch (_: Exception) {}
+        }
         schedule(c)
     }
 
@@ -162,6 +172,7 @@ object Policy {
         } else if (isLocked(c)) {
             desbloquear(c)
         }
+        if (!vencida) Recordatorio.revisar(c, due) // "vence en 3 días" / "vence mañana"
     }
 
     fun setDue(c: Context, millis: Long) {
@@ -306,7 +317,7 @@ object Policy {
 
     // ---------- Fechas (calendario local) ----------
 
-    private fun daysOf(millis: Long): Long {
+    internal fun daysOf(millis: Long): Long {
         val local = Calendar.getInstance().apply { timeInMillis = millis }
         val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         utc.clear()
@@ -325,7 +336,7 @@ object Policy {
         return local.timeInMillis
     }
 
-    private fun fecha(millis: Long): String {
+    internal fun fecha(millis: Long): String {
         val cal = Calendar.getInstance().apply { timeInMillis = millis }
         return String.format(
             "%02d/%02d/%04d",

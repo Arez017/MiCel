@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../services/api_config.dart';
 import '../services/api_service.dart';
+import '../services/notificaciones.dart';
 import 'client_shell.dart';
 import 'recover_password_screen.dart';
 
@@ -39,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await ApiService.loginCliente(user, pass);
+      Notificaciones.activarParaSesion();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const ClientShell()),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
 import 'services/api_config.dart';
+import 'services/notificaciones.dart';
 import 'services/session.dart';
 import 'screens/login_screen.dart';
 import 'screens/client_shell.dart';
@@ -9,7 +10,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiConfig.init();
   await ModoTema.cargar();
+  await Notificaciones.init();
   final restored = await ClientSession.restore();
+  if (restored) {
+    // Sin esperar: si no hay internet, la app abre igual.
+    Notificaciones.activarParaSesion();
+  }
   runApp(MiCelApp(startLoggedIn: restored));
 }
 
@@ -51,6 +57,7 @@ class _MiCelAppState extends State<MiCelApp> {
     return MaterialApp(
       title: 'MiCel',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: Notificaciones.mensajero,
       theme: AppTheme.theme,
       home: widget.startLoggedIn ? const ClientShell() : const LoginScreen(),
     );

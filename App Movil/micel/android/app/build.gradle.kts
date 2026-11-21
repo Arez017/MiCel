@@ -24,7 +24,8 @@ android {
         applicationId = "com.example.micel"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Firebase Cloud Messaging pide Android 6 (API 23) o superior.
+        minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -41,4 +42,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// Notificaciones push: sin google-services.json la app compila igual (sin notificaciones).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }

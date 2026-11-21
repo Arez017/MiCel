@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
+import '../services/notificaciones.dart';
 import '../services/session.dart';
 import 'login_screen.dart';
 
@@ -15,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = false;
 
   Future<void> _logout() async {
+    await Notificaciones.desactivar();
     await ApiService.logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(

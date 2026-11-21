@@ -79,6 +79,16 @@ class ApiService {
     await ClientSession.clear();
   }
 
+  /// Registra el celular para recibir notificaciones push (token de Firebase).
+  static Future<void> registrarTokenNotificaciones(String token) async {
+    final res = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/cliente/notificaciones/token'),
+      headers: _headers(auth: true),
+      body: jsonEncode({'token': token}),
+    );
+    await _handle(res);
+  }
+
   static Future<Map<String, dynamic>> me() async {
     final res = await http.get(
       Uri.parse('${ApiConfig.baseUrl}/cliente/me'),
